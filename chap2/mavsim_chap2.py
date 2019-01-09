@@ -1,7 +1,7 @@
 """
-mavSimPy 
+mavSimPy
     - Chapter 2 assignment for Beard & McLain, PUP, 2012
-    - Update history:  
+    - Update history:
         1/9/2019 - RWB
 """
 import sys
@@ -29,9 +29,9 @@ while sim_time < SIM.end_time:
     state.pn = 0 # 10*sim_time
     state.pe = 0 # 10*sim_time
     state.h = 0 # 10*sim_time
-    state.phi = 0 # sim_time
-    state.theta = 0 # sim_time
-    state.psi = sim_time
+    state.phi = sim_time/50 # sim_time #roll
+    state.theta = sim_time/100 #pitch
+    state.psi = sim_time/10 #yaw
 
     #-------update viewer-------------
     mav_view.update(state)
@@ -41,7 +41,3 @@ while sim_time < SIM.end_time:
 
 print("Press Ctrl-Q to exit...")
 pg.QtGui.QApplication.instance().exec_()
-
-
-
-

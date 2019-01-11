@@ -26,12 +26,12 @@ sim_time = SIM.start_time
 # main simulation loop
 while sim_time < SIM.end_time:
     #-------vary states to check viewer-------------
-    state.pn = 0 # 10*sim_time
+    state.pn = sim_time # 10*sim_time
     state.pe = 0 # 10*sim_time
     state.h = 0 # 10*sim_time
-    state.phi = sim_time/50 # sim_time #roll
-    state.theta = sim_time/100 #pitch
-    state.psi = sim_time/10 #yaw
+    state.phi = 0 # sim_time #roll
+    state.theta = sim_time #pitch
+    state.psi = 0 #yaw
 
     #-------update viewer-------------
     mav_view.update(state)

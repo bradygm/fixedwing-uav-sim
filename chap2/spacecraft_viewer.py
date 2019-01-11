@@ -49,6 +49,12 @@ class spacecraft_viewer():
         # rotate and translate points defining spacecraft
         rotated_points = self._rotate_points(self.points, R)
         translated_points = self._translate_points(rotated_points, spacecraft_position)
+
+        # #For educational benefit: If done incorrectly, translate then rotate
+        # translated_points = self._translate_points(self.points, spacecraft_position)
+        # rotated_points = self._rotate_points(translated_points, R)
+        # translated_points = rotated_points
+
         # convert North-East Down to East-North-Up for rendering
         R = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])
         translated_points = R @ translated_points

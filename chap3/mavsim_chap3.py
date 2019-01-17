@@ -1,7 +1,7 @@
 """
-mavSimPy 
+mavSimPy
     - Chapter 3 assignment for Beard & McLain, PUP, 2012
-    - Update history:  
+    - Update history:
         12/18/2018 - RWB
         1/14/2019 - RWB
 """
@@ -9,9 +9,10 @@ import sys
 sys.path.append('..')
 import numpy as np
 import parameters.simulation_parameters as SIM
+import time
 
 from chap2.mav_viewer import mav_viewer
-from chap2.video_writer import video_writer
+# from chap2.video_writer import video_writer
 from chap3.data_viewer import data_viewer
 from chap3.mav_dynamics import mav_dynamics
 
@@ -35,10 +36,10 @@ sim_time = SIM.start_time
 print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
     #-------vary forces and moments to check dynamics-------------
-    fx = 10
-    fy = 0 # 10
-    fz = 0 # 10
-    Mx = 0 # 0.1
+    fx = 1
+    fy = 2 # 10
+    fz = 3 # 10
+    Mx = .1 # 0.1
     My = 0 # 0.1
     Mz = 0 # 0.1
     forces_moments = np.array([[fx, fy, fz, Mx, My, Mz]]).T
@@ -57,10 +58,7 @@ while sim_time < SIM.end_time:
 
     #-------increment time-------------
     sim_time += SIM.ts_simulation
+    # time.sleep(.01)
 
 if VIDEO == True:
     video.close()
-
-
-
-

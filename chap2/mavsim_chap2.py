@@ -14,11 +14,11 @@ from message_types.msg_state import msg_state
 state = msg_state()  # instantiate state message
 
 #from chap2.mav_viewer import mav_viewer
-from chap2.spacecraft_viewer import spacecraft_viewer
+from chap2.mav_viewer import mav_viewer
 
 # initialize the mav viewer
 #mav_view = mav_viewer()
-mav_view = spacecraft_viewer()
+mav_view = mav_viewer()
 
 # initialize the simulation time
 sim_time = SIM.start_time

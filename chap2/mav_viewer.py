@@ -17,6 +17,7 @@ class mav_viewer():
         self.window = gl.GLViewWidget()  # initialize the view object
         self.window.setWindowTitle('Spacecraft Viewer')
         self.window.setGeometry(0, 0, 1000, 1000)  # args: upper_left_x, upper_right_y, width, height
+        # self.window.showMaximized()
         grid = gl.GLGridItem() # make a grid to represent the ground
         grid.scale(20, 20, 20) # set the size of the grid (distance between each line)
         self.window.addItem(grid) # add grid to viewer

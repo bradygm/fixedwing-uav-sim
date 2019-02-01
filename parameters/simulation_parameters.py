@@ -12,3 +12,11 @@ end_time = 100.  # end time for simulation
 ts_plotting = 0.5  # refresh rate for plots
 
 ts_control = ts_simulation  # sample rate for the controller
+
+#Wind parameters
+Lu = 200
+Lv = Lu
+Lw = 50
+sigma_u = 1.06
+sigma_v = sigma_u
+sigma_w = .7

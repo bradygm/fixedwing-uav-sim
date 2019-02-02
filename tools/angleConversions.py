@@ -27,4 +27,4 @@ def Quaternion2Rotation(e): #body to inertial
                     (2*(e[2]*e[3] - e[0]*e[1]))], \
                     [(2*(e[1]*e[3] - e[0]*e[2])), (2*(e[2]*e[3] + e[0]*e[1])), \
                     (e[0]**2 - e[1]**2 - e[2]**2 + e[3]**2)]])
-    return R
+    return R.squeeze()

@@ -11,8 +11,8 @@ from angleConversions import Euler2Quaternion
 #   Initial conditions for MAV
 pn0 = 0.  # initial north position
 pe0 = 0.  # initial east position
-pd0 = 0. # -20.0  # initial down position
-u0 = 0. # 17.  # initial velocity along body x-axis
+pd0 = -20.0 # -20.0  # initial down position
+u0 = 10.0 # 17.  # initial velocity along body x-axis
 v0 = 0.  # initial velocity along body y-axis
 w0 = 0.  # initial velocity along body z-axis
 phi0 = 0.  # initial roll angle
@@ -101,11 +101,13 @@ D_prop = 20*(0.0254)     # prop diameter in m
 
 # Motor parameters
 K_V = 145.                   # from datasheet RPM/V
+KQ = (1. / K_V) * 60. / (2. * np.pi)  # KQ in N-m/A, V-s/rad
 R_motor = 0.042              # ohms
 i0 = 1.5                     # no-load (zero-torque) current (A)
 
 # Inputs
 ncells = 12.
+V_max = 3.7 * ncells  # max voltage for specified number of battery cells
 
 # Coeffiecients from prop_data fit
 C_Q2 = -0.01664

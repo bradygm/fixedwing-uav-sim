@@ -185,9 +185,9 @@ class mav_dynamics:
         """
         #Forces due to gravity
         # phi, theta, psi = Quaternion2Euler(self._state[6:10])
-        # fx = -MAV.mass*MAV.gravity * sin(theta)
-        # fy = MAV.mass*MAV.gravity*cos(theta)*sin(phi)
-        # fz = MAV.mass*MAV.gravity*cos(theta)*cos(phi)
+        # fx = -MAV.mass*MAV.gravity * np.sin(theta)
+        # fy = MAV.mass*MAV.gravity*np.cos(theta)*np.sin(phi)
+        # fz = MAV.mass*MAV.gravity*np.cos(theta)*np.cos(phi)
         fx = MAV.mass*MAV.gravity*2*(self._state[7]*self._state[9] - self._state[8]*self._state[6])
         fy = MAV.mass*MAV.gravity*2*(self._state[8]*self._state[9] + self._state[7]*self._state[6])
         fz = MAV.mass*MAV.gravity*(self._state[9]**2 + self._state[6]**2 - self._state[7]**2 - self._state[8]**2)
@@ -228,13 +228,13 @@ class mav_dynamics:
         a = MAV.C_Q0 * MAV.rho * np.power(MAV.D_prop, 5) \
             / ((2.*np.pi)**2)
         b = (MAV.C_Q1 * MAV.rho * np.power(MAV.D_prop, 4) \
-            / (2.*np.pi)) * self._Va + MAV.KQ**2/MAV.R_motor
+            / (2.*np.pi)) * self._Va + MAV.KQ*MAV.K_V/MAV.R_motor
         c = MAV.C_Q2 * MAV.rho * np.power(MAV.D_prop, 3) \
             * self._Va**2 - (MAV.KQ/MAV.R_motor) * V_in + MAV.KQ*MAV.i0
         #Consider only positive _rotate_points
-        Omega_op = (-b + np.sqrt(b**2 - 4*a*c)) / (2.*a)
+        Omega_op = (-b + np.sqrt(b**2. - 4.*a*c)) / (2.*a)
         #compute advance ratio
-        J_op = 2*np.pi*self._Va / (Omega_op * MAV.D_prop)
+        J_op = 2.*np.pi*self._Va / (Omega_op * MAV.D_prop)
         #compute non-dimensionalized coefficients of thrust and torque
         C_T = MAV.C_T2*J_op**2 + MAV.C_T1*J_op + MAV.C_T0
         C_Q = MAV.C_Q2*J_op**2 + MAV.C_Q1*J_op + MAV.C_Q0

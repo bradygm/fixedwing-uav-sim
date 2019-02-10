@@ -33,12 +33,12 @@ class wind_simulation:
         wd = (Va/SIM.Lw)**2
 
 
-        self._A = np.array([[(1-Ts*ub), 0., 0., 0., 0.], \
-                            [0., (1-Ts*vc), (-Ts*vd), 0., 0.], \
-                            [0., Ts, 1., 0., 0.], \
-                            [0., 0., 0., (1-Ts*wc), (-Ts*wd)], \
-                            [0., 0., 0., Ts, 1.]])
-        self._B = np.array([[Ts],[Ts],[0.],[Ts],[0.]])
+        self._A = np.array([[(-ub), 0., 0., 0., 0.], \
+                            [0., (-vc), (-vd), 0., 0.], \
+                            [0., 1., 0., 0., 0.], \
+                            [0., 0., 0., (-wc), (-wd)], \
+                            [0., 0., 0., 1., 0.]])
+        self._B = np.array([[1.],[1.],[0.],[1.],[0.]])
         self._C = np.array([[ua, 0., 0., 0., 0.],[0., va, vb, 0., 0.],[0., 0., 0., wa, wb]])
         self._gust_state = np.array([[0., 0., 0., 0., 0.]]).T
         self._Ts = Ts
@@ -47,12 +47,15 @@ class wind_simulation:
         # returns a six vector.
         #   The first three elements are the steady state wind in the inertial frame
         #   The second three elements are the gust in the body frame
+        # return np.array([[0., 0., 0., 0., 0., 0.]]).T
         return np.concatenate(( self._steady_state, self._gust() ))
 
     def _gust(self):
         # calculate wind gust using Dryden model.  Gust is defined in the body frame
         w = np.random.randn()  # zero mean unit variance Gaussian (white noise)
+        w1 = np.random.randn()  # zero mean unit variance Gaussian (white noise)
+        w2 = np.random.randn()  # zero mean unit variance Gaussian (white noise)
         # propagate Dryden model (Euler method): x[k+1] = x[k] + Ts*( A x[k] + B w[k] )
-        self._gust_state += self._Ts * (self._A @ self._gust_state + self._B * w)
+        self._gust_state += self._Ts * (self._A @ self._gust_state + self._B * np.array([[w, w1, 0., w2, 0.]]).T)
         # output the current gust: y[k] = C x[k]
         return self._C @ self._gust_state

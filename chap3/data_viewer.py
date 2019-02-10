@@ -13,7 +13,8 @@ class data_viewer:
                                labels={'left': 'pe(m)', 'bottom': 'Time (s)'})
         h_plots = PlotboxArgs(plots=['h', 'h_e', 'h_c'],
                               labels={'left': 'h(m)', 'bottom': 'Time (s)'})
-        wind_plots = PlotboxArgs(plots=['wn', 'wn_e', 'we', 'we_e'],
+        # wind_plots = PlotboxArgs(plots=['wn', 'wn_e', 'we', 'we_e'],
+        wind_plots=PlotboxArgs(plots=['wn', 'we'],
                                  labels={'left': 'wind(m/s)', 'bottom': 'Time (s)'})
         first_row = [pn_plots, pe_plots, h_plots, wind_plots]
 

@@ -3,16 +3,15 @@ sys.path.append('..')
 import numpy as np
 sys.path.append('../tools')
 from angleConversions import Euler2Quaternion
-# import tools.angleConversions
 
 ######################################################################################
-                #   Initial Conditions
+#   Initial Conditions
 ######################################################################################
 #   Initial conditions for MAV
 pn0 = 0.  # initial north position
 pe0 = 0.  # initial east position
-pd0 = 0.0 # -20.0  # initial down position
-u0 = 17.0 # 17.  # initial velocity along body x-axis
+pd0 = -100.0  # initial down position
+u0 = 25.  # initial velocity along body x-axis
 v0 = 0.  # initial velocity along body y-axis
 w0 = 0.  # initial velocity along body z-axis
 phi0 = 0.  # initial roll angle
@@ -31,9 +30,9 @@ e3 = e[3]
 
 
 ######################################################################################
-                #   Physical Parameters
+#   Physical Parameters
 ######################################################################################
-mass = 13.5 #kg
+mass = 11 #kg
 Jx = 0.8244 #kg m^2
 Jy = 1.135
 Jz = 1.759
@@ -43,58 +42,55 @@ b = 2.8956
 c = 0.18994
 S_prop = 0.2027
 rho = 1.2682
-k_motor = 80
-kTp = 0.0
-kOmega = 0.0
 e = 0.9
 AR = (b**2) / S_wing
 gravity = 9.8
 
 ######################################################################################
-                #   Longitudinal Coefficients
+#   Longitudinal Coefficients
 ######################################################################################
-C_L_0 = 0.28
-C_L_alpha = 3.45
-C_L_q = 0.0
-C_L_delta_e = -0.36
-C_D_0 = 0.03
-C_D_alpha = 0.3
-C_D_p = 0.0437
+C_L_0 = 0.23
+C_D_0 = 0.043
+C_m_0 = 0.0135
+C_L_alpha = 5.61
+C_D_alpha = 0.03
+C_m_alpha = -2.74
+C_L_q = 7.95
 C_D_q = 0.0
-C_D_delta_e = 0.0
-C_m_0 = -0.02338
-C_m_alpha = -0.38
-C_m_q = -3.6
-C_m_delta_e = -0.5
-C_prop = 1.0
+C_m_q = -38.21
+C_L_delta_e = 0.13
+C_D_delta_e = 0.0135
+C_m_delta_e = -0.99
 M = 50.0
-alpha0 = 0.4712
-epsilon = 0.1592
+alpha0 = 0.47
+epsilon = 0.16
+C_D_p = 0.0
+
 
 ######################################################################################
-                #   Lateral Coefficients
+#   Lateral Coefficients
 ######################################################################################
 C_Y_0 = 0.0
-C_Y_beta = -0.98
-C_Y_p = 0.0
-C_Y_r = 0.0
-C_Y_delta_a = 0.0
-C_Y_delta_r = -0.17
 C_ell_0 = 0.0
-C_ell_beta = -0.12
-C_ell_p = -0.26
-C_ell_r = 0.14
-C_ell_delta_a = 0.08
-C_ell_delta_r = 0.105
 C_n_0 = 0.0
-C_n_beta = 0.25
-C_n_p = 0.022
-C_n_r = -0.35
-C_n_delta_a = 0.06
-C_n_delta_r = -0.032
+C_Y_beta = -0.98
+C_ell_beta = -0.13
+C_n_beta = 0.073
+C_Y_p = 0.0
+C_ell_p = -0.51
+C_n_p = 0.069
+C_Y_r = 0.0
+C_ell_r = 0.25
+C_n_r = -0.095
+C_Y_delta_a = 0.075
+C_ell_delta_a = 0.17
+C_n_delta_a = -0.011
+C_Y_delta_r = 0.19
+C_ell_delta_r = 0.0024
+C_n_delta_r = -0.069
 
 ######################################################################################
-                #   Propeller thrust / torque parameters (see addendum by McLain)
+#   Propeller thrust / torque parameters (see addendum by McLain)
 ######################################################################################
 # Prop parameters
 D_prop = 20*(0.0254)     # prop diameter in m
@@ -104,6 +100,7 @@ K_V = 145.                   # from datasheet RPM/V
 KQ = (1. / K_V) * 60. / (2. * np.pi)  # KQ in N-m/A, V-s/rad
 R_motor = 0.042              # ohms
 i0 = 1.5                     # no-load (zero-torque) current (A)
+
 
 # Inputs
 ncells = 12.
@@ -118,7 +115,7 @@ C_T1 = -0.06044
 C_T0 = 0.09357
 
 ######################################################################################
-                #   Calculation Variables
+#   Calculation Variables
 ######################################################################################
 #   gamma parameters pulled from page 36 (dynamics)
 gamma = Jx * Jz - (Jxz**2)

@@ -78,6 +78,8 @@ class mav_dynamics:
         e2 = self._state.item(8)
         e3 = self._state.item(9)
         normE = np.sqrt(e0**2+e1**2+e2**2+e3**2)
+        if(normE > 10):
+            yo = 2
         self._state[6][0] = self._state.item(6)/normE
         self._state[7][0] = self._state.item(7)/normE
         self._state[8][0] = self._state.item(8)/normE
@@ -139,6 +141,19 @@ class mav_dynamics:
         e2_dot = (q*e0 - r*e1 + p*e3)/2
         e3_dot = (r*e0 + q*e1 - p*e2)/2
 
+        # # normalization similink thing
+        # lamda = 100
+        # norm_E = np.sqrt(e0**2+e1**2+e2**2+e3**2)
+        # rotate_E = np.array([[(lamda*(1-norm_E**2)), -p, -q, -r], \
+        #                     [p, (lamda*(1-norm_E**2)), r, -q], \
+        #                     [q, -r , (lamda*(1-norm_E**2)),p], \
+        #                     [r, q, -p, (lamda*(1-norm_E**2))]])
+        # e_dot = .5 * rotate_E @ np.array([[e0],[e1],[e2],[e3]])
+        # e0_dot = e_dot.item(0)
+        # e1_dot = e_dot.item(1)
+        # e2_dot = e_dot.item(2)
+        # e3_dot = e_dot.item(3)
+
         # rotatonal dynamics
         p_dot = MAV.gamma1*p*q - MAV.gamma2*q*r + MAV.gamma3*l + MAV.gamma4*n
         q_dot = MAV.gamma5*p*r - MAV.gamma6*(p**2-r**2) + m/MAV.Jy
@@ -152,12 +167,19 @@ class mav_dynamics:
     # def _update_velocity_data(self, wind=np.zeros((6,1))):
     def _update_velocity_data(self, wind):
         R = Quaternion2Rotation(self._state[6:10])
+         #Should _wind be in inertial or body
+        wind2 = R.T @ wind[0:3] + wind[3:6]
+        self._wind = R @ wind2
+        
+        wind2 = np.zeros((6,1))
 
-        self._wind = R.T @ wind[0:3] + wind[3:6]
+        ur = self._state.item(3) - wind2.item(0)
+        vr = self._state.item(4) - wind2.item(1)
+        wr = self._state.item(5) - wind2.item(2)
 
-        ur = self._state.item(3) - self._wind.item(0)
-        vr = self._state.item(4) - self._wind.item(1)
-        wr = self._state.item(5) - self._wind.item(2)
+        # ur = self._state.item(3) - self._wind.item(0)
+        # vr = self._state.item(4) - self._wind.item(1)
+        # wr = self._state.item(5) - self._wind.item(2)
 
         # compute groud speed
         Vg = R @ self._state[3:6]
@@ -195,15 +217,10 @@ class mav_dynamics:
         #Forces due to aerodynamics
         cA = np.cos(self._alpha)
         sA = np.sin(self._alpha)
-        # print("here")
         Cd = MAV.C_D_p + (MAV.C_L_0 + MAV.C_L_alpha*self._alpha)**2/(np.pi*np.exp(1)*MAV.AR)
         sigmaA = (1 + np.exp(-MAV.M*(self._alpha-MAV.alpha0)) + np.exp(MAV.M*(self._alpha+MAV.alpha0))) \
                 / ((1+np.exp(-MAV.M*(self._alpha-MAV.alpha0)))*(1+np.exp(MAV.M*(self._alpha+MAV.alpha0))))
         Cl = (1-sigmaA)*(MAV.C_L_0 + MAV.C_L_alpha*self._alpha) + sigmaA*(2*np.sign(self._alpha)*sA**2*cA)
-        # print(Cd)
-        # print(cA)
-        # print(Cl)
-        # print(sA)
         Cx = -Cd*cA + Cl*sA
         Cxq = -MAV.C_D_q * cA + MAV.C_L_q * sA
         Cxdeltae = -MAV.C_D_delta_e*cA + MAV.C_L_delta_e*sA
@@ -228,7 +245,7 @@ class mav_dynamics:
         a = MAV.C_Q0 * MAV.rho * np.power(MAV.D_prop, 5) \
             / ((2.*np.pi)**2)
         b = (MAV.C_Q1 * MAV.rho * np.power(MAV.D_prop, 4) \
-            / (2.*np.pi)) * self._Va + MAV.KQ*MAV.K_V/MAV.R_motor
+            / (2.*np.pi)) * self._Va + MAV.KQ**2/MAV.R_motor
         c = MAV.C_Q2 * MAV.rho * np.power(MAV.D_prop, 3) \
             * self._Va**2 - (MAV.KQ/MAV.R_motor) * V_in + MAV.KQ*MAV.i0
         #Consider only positive _rotate_points

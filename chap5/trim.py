@@ -8,12 +8,18 @@ import sys
 sys.path.append('..')
 import numpy as np
 from scipy.optimize import minimize
-from tools.tools import Euler2Quaternion
+sys.path.append('../tools')
+# from angleConversions import Euler2Quaternion
+# from state_derivatives import _derivatives
 
 def compute_trim(mav, Va, gamma):
     # define initial state and input
-    state0 =
-    delta0 =
+    state0 = mav._state
+    delta_e = -0.05
+    delta_t = .9
+    delta_a = -0.01
+    delta_r = 0.000
+    delta0 = np.array([[delta_a, delta_e, delta_r, delta_t]]).T  # transpose to make it a column vector
     x0 = np.concatenate((state0, delta0), axis=0)
     # define equality constraints
     cons = ({'type': 'eq',
@@ -48,5 +54,27 @@ def compute_trim(mav, Va, gamma):
 
 # objective function to be minimized
 def trim_objective(x, mav, Va, gamma):
-  return J
+
+    x_dot_star = np.array([[0.],  # (0)
+                           [0.],   # (1)
+                           [Va*np.sin(gamma)],   # (2)
+                           [0.],    # (3)
+                           [0.],    # (4)
+                           [0.],    # (5)
+                           [0.],    # (6)
+                           [0.],    # (7)
+                           [0.],    # (8)
+                           [0.],    # (9)
+                           [0.],    # (10)
+                           [0.],    # (11)
+                           [0.]])   # (12)
+    #What about the variables we don't care about??
+    # f_star = _derivatives(x[0:13], x[13:17], gamma, Va)
+    state = x[0:13]
+    mav._state = state
+    mav._update_velocity_data()
+    f_star = mav._derivatives(state, mav._forces_moments(x[13:17]))
+    J = np.sum((x_dot_star[2:13]-f_star[2:13])**2)
+
+    return J
 

@@ -164,13 +164,13 @@ class mav_dynamics:
                            e0_dot, e1_dot, e2_dot, e3_dot, p_dot, q_dot, r_dot]]).T
         return x_dot
 
-    # def _update_velocity_data(self, wind=np.zeros((6,1))):
-    def _update_velocity_data(self, wind):
+    def _update_velocity_data(self, wind=np.zeros((6,1))):
+    # def _update_velocity_data(self, wind):
         R = Quaternion2Rotation(self._state[6:10])
          #Should _wind be in inertial or body
         wind2 = R.T @ wind[0:3] + wind[3:6]
         self._wind = R @ wind2
-        
+
         wind2 = np.zeros((6,1))
 
         ur = self._state.item(3) - wind2.item(0)

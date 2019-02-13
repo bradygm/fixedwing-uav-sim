@@ -8,8 +8,9 @@ import sys
 sys.path.append('..')
 import numpy as np
 from scipy.optimize import minimize
-from tools.tools import Euler2Quaternion, Quaternion2Euler
-from tools.transfer_function import transfer_function
+sys.path.append('../tools')
+from angleConversions import Euler2Quaternion, Quaternion2Euler
+from transfer_function import transfer_function
 import parameters.aerosonde_parameters as MAV
 from parameters.simulation_parameters import ts_simulation as Ts
 

@@ -16,9 +16,43 @@ from angleConversions import Euler2Quaternion, Quaternion2Euler
 
 def compute_tf_model(mav, trim_state, trim_input):
     # trim values
-    T_phi_delta_a = a_phi_2/()
+    phi, theta, psi = Quaternion2Euler(trim_state[6:10])
+    T_phi_delta_a_a1 = -.5*MAV.rho*mav._Va**2*MAV.S_wing*MAV.b*MAV.C_p_p*MAV.b/(2.*mav._Va)#What is SB??
+    T_phi_delta_a_a2 = .5 *MAV.rho*mav._Va**2*MAV.S_wing*MAV.b*MAV.C_p_delta_a
+    T_chi_phi = MAV.gravity/mav._Vg
+    T_theta_delta_e_a1 = (-MAV.rho*mav._Va**2*MAV.c*MAV.S_wing/(2.*MAV.Jy))*MAV.C_m_q*MAV.c/(2.*mav._Va)
+    T_theta_delta_e_a2 = (-MAV.rho*mav._Va**2*MAV.c*MAV.S_wing/(2.*MAV.Jy))*MAV.C_m_alpha
+    T_theta_delta_e_a3 = (MAV.rho*mav._Va**2*MAV.c*MAV.S_wing/(2.*MAV.Jy))*MAV.C_m_delta_e
+    T_h_theta = mav._Va
+    T_h_Va = theta
+    C_prop = 1
+    k = 1
+    T_Va_delta_t_a1 = (MAV.rho*mav._Va*MAV.S_wing/MAV.mass)*(MAV.C_D_0 + MAV.C_D_alpha*mav._alpha + MAV.C_D_delta_e*trim_input[1]) \
+                        + MAV.rho*MAV.S_prop*C_prop*mav._Va/MAV.mass #WHERE IS Cprop?
+            #Aren't they all about trim values?? What other Va use?
+    T_Va_delta_t_a2 = (MAV.rho*MAV.S_wing/MAV.mass)*C_prop*k**2*trim_input[3] #Where is k???
+    T_Va_theta = -MAV.gravity
+    T_beta_delta_r_a1 = -MAV.rho*mav._Va*MAV.S_wing*MAV.C_Y_beta/(2.*MAV.mass)
+    T_beta_delta_r_a2 = -MAV.rho*mav._Va*MAV.S_wing*MAV.C_Y_delta_r/(2.*MAV.mass)
 
-    return T_phi_delta_a, T_chi_phi, T_theta_delta_e, T_h_theta, T_h_Va, T_Va_delta_t, T_Va_theta, T_beta_delta_r
+    f = open('../chap5/tf_coefficients.py', 'w')
+    f.write('T_phi_delta_a_a1 = ' + str(T_phi_delta_a_a1) + '\n')
+    f.write('T_phi_delta_a_a2 = ' + str(T_phi_delta_a_a2) + '\n')
+    f.write('T_chi_phi = ' + str(T_chi_phi) + '\n')
+    f.write('T_theta_delta_e_a1 = ' + str(T_theta_delta_e_a1) + '\n')
+    f.write('T_theta_delta_e_a2 = ' + str(T_theta_delta_e_a2) + '\n')
+    f.write('T_theta_delta_e_a3 = ' + str(T_theta_delta_e_a3) + '\n')
+    f.write('T_h_theta = ' + str(T_h_theta) + '\n')
+    f.write('T_h_Va = ' + str(T_h_Va) + '\n')
+    f.write('T_Va_delta_t_a1 = ' + str(T_Va_delta_t_a1) + '\n')
+    f.write('T_Va_delta_t_a2 = ' + str(T_Va_delta_t_a2) + '\n')
+    f.write('T_Va_theta = ' + str(T_Va_theta) + '\n')
+    f.write('T_beta_delta_r_a1 = ' + str(T_beta_delta_r_a1) + '\n')
+    f.write('T_beta_delta_r_a2 = ' + str(T_beta_delta_r_a2) + '\n')
+    f.close()
+
+
+    # return T_phi_delta_a, T_chi_phi, T_theta_delta_e, T_h_theta, T_h_Va, T_Va_delta_t, T_Va_theta, T_beta_delta_r
 
 def compute_ss_model(mav, trim_state, trim_input):
     A_q = df_dx(mav, trim_state, trim_input)
@@ -33,8 +67,9 @@ def compute_ss_model(mav, trim_state, trim_input):
     B_lat = B_e[[[4],[9],[11],[6],[8]],[0,2]]
     A_lon = A_e[[[3],[5],[10],[7],[2]],[3,5,10,7,2]] #WHAT ABOUT HDOT!! negative?
     B_lon = B_e[[[3],[5],[10],[7],[2]],[1,2]]
+    A_lon[4,:] = A_lon[4,:]*-1.0
 
-    return A_lon, B_lon, A_lat, B_lat #B_lat only one completely right
+    return A_lon, B_lon, A_lat, B_lat #B_lat completely right # 5,3 and 3,2 in A_lat wrong #A_lon close to right # B_lon right
 
 def euler_state(x_quat):
     # convert state x with attitude represented by quaternion

@@ -120,15 +120,25 @@ class mav_dynamics:
         n = forces_moments.item(5)
 
         # position kinematics
-        pn_dot = (e1**2 + e0**2 - e2**2 - e3**2)*u + \
-                 (2*(e1*e2-e3*e0))*v + \
-                 (2*(e1*e3 + e2*e0))*w
-        pe_dot = (2*(e1*e2 + e3*e0))*u + \
-                 (e2**2 + e0**2 - e1**2 - e3**2)*v + \
-                 (2*(e2*e3 - e1*e0))*w
-        pd_dot = (2*(e1*e3 - e2*e0))*u + \
-                 (2*(e2*e3 + e1*e0))*v + \
-                 (e3**2 + e0**2 - e1**2 - e2**2)*w
+        # pn_dot = (e1**2 + e0**2 - e2**2 - e3**2)*u + \
+        #          (2*(e1*e2-e3*e0))*v + \
+        #          (2*(e1*e3 + e2*e0))*w
+        # pe_dot = (2*(e1*e2 + e3*e0))*u + \
+        #          (e2**2 + e0**2 - e1**2 - e3**2)*v + \
+        #          (2*(e2*e3 - e1*e0))*w
+        # pd_dot = (2*(e1*e3 - e2*e0))*u + \
+        #          (2*(e2*e3 + e1*e0))*v + \
+        #          (e3**2 + e0**2 - e1**2 - e2**2)*w
+        E_Matrix = np.array([[(e1**2 + e0**2 - e2**2 - e3**2), (2*(e1*e2-e3*e0)), (2*(e1*e3 + e2*e0))],
+                             [(2*(e1*e2 + e3*e0)), (e2**2 + e0**2 - e1**2 - e3**2), (2*(e2*e3 - e1*e0))],
+                             [(2*(e1*e3 - e2*e0)), (2*(e2*e3 + e1*e0)), (e3**2 + e0**2 - e1**2 - e2**2)]])
+        u_v_w = np.array([[u],[v],[w]])
+        ped_dot = E_Matrix @ u_v_w
+        pn_dot = ped_dot[0]
+        pe_dot = ped_dot[1]
+        pd_dot = ped_dot[2]
+
+
 
         # position dynamics
         u_dot = r*v - q*w + fx/MAV.mass
@@ -217,9 +227,9 @@ class mav_dynamics:
         #Forces due to aerodynamics
         cA = np.cos(self._alpha)
         sA = np.sin(self._alpha)
-        Cd = MAV.C_D_p + (MAV.C_L_0 + MAV.C_L_alpha*self._alpha)**2/(np.pi*np.exp(1)*MAV.AR)
+        Cd = MAV.C_D_p + (MAV.C_L_0 + MAV.C_L_alpha*self._alpha)**2/(np.pi*MAV.e*MAV.AR)
         sigmaA = (1 + np.exp(-MAV.M*(self._alpha-MAV.alpha0)) + np.exp(MAV.M*(self._alpha+MAV.alpha0))) \
-                / ((1+np.exp(-MAV.M*(self._alpha-MAV.alpha0)))*(1+np.exp(MAV.M*(self._alpha+MAV.alpha0))))
+                / ((1 + np.exp(-MAV.M*(self._alpha-MAV.alpha0)))*(1 + np.exp(MAV.M*(self._alpha+MAV.alpha0))))
         Cl = (1-sigmaA)*(MAV.C_L_0 + MAV.C_L_alpha*self._alpha) + sigmaA*(2*np.sign(self._alpha)*sA**2*cA)
         Cx = -Cd*cA + Cl*sA
         Cxq = -MAV.C_D_q * cA + MAV.C_L_q * sA
@@ -227,6 +237,7 @@ class mav_dynamics:
         Cz = -Cd*sA - Cl*cA
         Czq = -MAV.C_D_q * sA - MAV.C_L_q * cA
         Czdeltae = -MAV.C_D_delta_e*sA - MAV.C_L_delta_e*cA
+
         fx += .5*MAV.rho*self._Va**2 * MAV.S_wing*(Cx + Cxq*MAV.c*self._state[11]/(2*self._Va) + Cxdeltae*delta[1])
         fy += .5*MAV.rho*self._Va**2 * MAV.S_wing*(MAV.C_Y_0 + MAV.C_Y_beta*self._beta + MAV.C_Y_p*MAV.b*self._state[10]/(2*self._Va) \
                 + MAV.C_Y_r*MAV.b*self._state[12]/(2*self._Va) + MAV.C_Y_delta_a*delta[0] + MAV.C_Y_delta_r*delta[2])

@@ -1,0 +1,13 @@
+T_phi_delta_a_a1 = 22.62885069325781
+T_phi_delta_a_a2 = 130.88367819945088
+T_chi_phi = 0.3919999999999364
+T_theta_delta_e_a1 = 5.294738297989027
+T_theta_delta_e_a2 = 99.947421628855
+T_theta_delta_e_a3 = -36.112389566630085
+T_h_theta = 25.000000000000046
+T_h_Va = 0.05001089890702405
+T_Va_delta_t_a1 = [0.65211047]
+T_Va_delta_t_a2 = [0.04291286]
+T_Va_theta = -9.8
+T_beta_delta_r_a1 = 0.7767725000000015
+T_beta_delta_r_a2 = -0.1505987500000003

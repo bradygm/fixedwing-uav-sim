@@ -18,6 +18,7 @@ from chap4.mav_dynamics import mav_dynamics
 from chap4.wind_simulation import wind_simulation
 from chap5.trim import compute_trim
 from chap5.compute_models import compute_ss_model, compute_tf_model
+import parameters.aerosonde_parameters as MAV
 
 # initialize the visualization
 VIDEO = False  # True==write video, False==don't write video
@@ -58,8 +59,10 @@ delta = trim_input  # set input to constant constant trim input
 
 # # compute the state space model linearized about trim
 A_lon, B_lon, A_lat, B_lat = compute_ss_model(mav, trim_state, trim_input)
+
 # T_phi_delta_a, T_chi_phi, T_theta_delta_e, T_h_theta, \
 # T_h_Va, T_Va_delta_t, T_Va_theta, T_beta_delta_r \
+
 mav._update_velocity_data()
 compute_tf_model(mav, trim_state, trim_input)
 

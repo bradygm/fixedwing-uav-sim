@@ -120,23 +120,23 @@ class mav_dynamics:
         n = forces_moments.item(5)
 
         # position kinematics
-        # pn_dot = (e1**2 + e0**2 - e2**2 - e3**2)*u + \
-        #          (2*(e1*e2-e3*e0))*v + \
-        #          (2*(e1*e3 + e2*e0))*w
-        # pe_dot = (2*(e1*e2 + e3*e0))*u + \
-        #          (e2**2 + e0**2 - e1**2 - e3**2)*v + \
-        #          (2*(e2*e3 - e1*e0))*w
-        # pd_dot = (2*(e1*e3 - e2*e0))*u + \
-        #          (2*(e2*e3 + e1*e0))*v + \
-        #          (e3**2 + e0**2 - e1**2 - e2**2)*w
-        E_Matrix = np.array([[(e1**2 + e0**2 - e2**2 - e3**2), (2*(e1*e2-e3*e0)), (2*(e1*e3 + e2*e0))],
-                             [(2*(e1*e2 + e3*e0)), (e2**2 + e0**2 - e1**2 - e3**2), (2*(e2*e3 - e1*e0))],
-                             [(2*(e1*e3 - e2*e0)), (2*(e2*e3 + e1*e0)), (e3**2 + e0**2 - e1**2 - e2**2)]])
-        u_v_w = np.array([[u],[v],[w]])
-        ped_dot = E_Matrix @ u_v_w
-        pn_dot = ped_dot[0]
-        pe_dot = ped_dot[1]
-        pd_dot = ped_dot[2]
+        pn_dot = (e1**2 + e0**2 - e2**2 - e3**2)*u + \
+                 (2*(e1*e2-e3*e0))*v + \
+                 (2*(e1*e3 + e2*e0))*w
+        pe_dot = (2*(e1*e2 + e3*e0))*u + \
+                 (e2**2 + e0**2 - e1**2 - e3**2)*v + \
+                 (2*(e2*e3 - e1*e0))*w
+        pd_dot = (2*(e1*e3 - e2*e0))*u + \
+                 (2*(e2*e3 + e1*e0))*v + \
+                 (e3**2 + e0**2 - e1**2 - e2**2)*w
+        # E_Matrix = np.array([[(e1**2 + e0**2 - e2**2 - e3**2), (2*(e1*e2-e3*e0)), (2*(e1*e3 + e2*e0))],
+        #                      [(2*(e1*e2 + e3*e0)), (e2**2 + e0**2 - e1**2 - e3**2), (2*(e2*e3 - e1*e0))],
+        #                      [(2*(e1*e3 - e2*e0)), (2*(e2*e3 + e1*e0)), (e3**2 + e0**2 - e1**2 - e2**2)]])
+        # u_v_w = np.array([[u],[v],[w]])
+        # ped_dot = E_Matrix @ u_v_w
+        # pn_dot = ped_dot[0]
+        # pe_dot = ped_dot[1]
+        # pd_dot = ped_dot[2]
 
 
 

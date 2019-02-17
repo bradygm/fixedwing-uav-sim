@@ -17,15 +17,46 @@ class pid_control:
         self.limit = limit
         self.integrator = 0.0
         self.error_delay_1 = 0.0
-        self.error_dot_delay_1 = 0.0
+        self.differentiator = 0.0
         # gains for differentiator
         self.a1 = (2.0 * sigma - Ts) / (2.0 * sigma + Ts)
         self.a2 = 2.0 / (2.0 * sigma + Ts)
 
     def update(self, y_ref, y, reset_flag=False):
+        if reset_flag:
+            self.integrator = 0
+            self.error_delay_1 = 0.0
+            self.differentiator = 0.0
+        error = y_ref - y
+        self.integrator = self.integrator + (self.Ts/2)*(error + self.error_delay_1)
+        self.differentiator = self.a1*self.differentiator + self.a2*(error - self.error_delay_1)
+        #update error for next iteration
+        self.error_delay_1 = error
+        u_sat = self._saturate(self.kp*error +
+                               self.ki*self.integrator +
+                               self.kd*self.differentiator)
+        #implement anti-windup
+        if self.ki != 0:
+            u_unsat = self.kp*error + self.ki*self.integrator + self.kd*self.differentiator
+            self.integrator = self.integrator + (self.Ts/self.ki)*(u_sat - u_unsat)
         return u_sat
 
     def update_with_rate(self, y_ref, y, ydot, reset_flag=False):
+        if reset_flag:
+            self.integrator = 0
+            self.error_delay_1 = 0.0
+            self.differentiator = 0.0
+        error = y_ref - y
+        self.integrator = self.integrator + (self.Ts/2)*(error + self.error_delay_1)
+        #update error for next iteration
+        self.error_delay_1 = error
+        u_sat = self._saturate(self.kp*error +
+                               self.ki*self.integrator +
+                               self.kd*ydot)
+        #implement anti-windup
+        if self.ki != 0:
+            u_unsat = self.kp*error + self.ki*self.integrator + self.kd*ydot
+            self.integrator = self.integrator + (self.Ts/self.ki)*(u_sat - u_unsat)
         return u_sat
 
     def _saturate(self, u):
@@ -48,6 +79,19 @@ class pi_control:
         self.error_delay_1 = 0.0
 
     def update(self, y_ref, y):
+        # if reset_flag:
+        #     self.integrator = 0
+        #     self.error_delay_1 = 0.0
+        error = y_ref - y
+        self.integrator = self.integrator + (self.Ts/2)*(error + self.error_delay_1)
+        #update error for next iteration
+        self.error_delay_1 = error
+        u_sat = self._saturate(self.kp*error +
+                               self.ki*self.integrator)
+        #implement anti-windup
+        if self.ki != 0:
+            u_unsat = self.kp*error + self.ki*self.integrator
+            self.integrator = self.integrator + (self.Ts/self.ki)*(u_sat - u_unsat)
         return u_sat
 
     def _saturate(self, u):
@@ -69,6 +113,8 @@ class pd_control_with_rate:
         self.limit = limit
 
     def update(self, y_ref, y, ydot):
+        u_unsat = self.kp*(y_ref-y) - self.kd*ydot
+        u_sat = self._saturate(u_unsat)
         return u_sat
 
     def _saturate(self, u):

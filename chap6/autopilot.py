@@ -29,8 +29,12 @@ class autopilot:
                         ki=AP.sideslip_ki,
                         Ts=ts_control,
                         limit=np.radians(45))
+        # self.yaw_damper = transfer_function(
+        #                 num=np.array([[AP.yaw_damper_kp, 0]]),
+        #                 den=np.array([[1, 1 / AP.yaw_damper_tau_r]]),
+        #                 Ts=ts_control)
 
-        # instantiate lateral controllers
+        # instantiate longitudinal controllers
         self.pitch_from_elevator = pd_control_with_rate(
                         kp=AP.pitch_kp,
                         kd=AP.pitch_kd,
@@ -50,15 +54,15 @@ class autopilot:
     def update(self, cmd, state):
 
         # lateral autopilot
-        phi_c =
-        delta_a =
-        delta_r =
+        phi_c = np.radians(10)
+        delta_a = self.roll_from_aileron.update(phi_c, state.phi,state.p)
+        delta_r = 0.
 
         # longitudinal autopilot
-        h_c =
-        theta_c =
-        delta_e =
-        delta_t =
+        h_c = 0.
+        theta_c = 0.
+        delta_e = 0.
+        delta_t = 0.
 
         # construct output and commanded states
         delta = np.array([[delta_e], [delta_a], [delta_r], [delta_t]])

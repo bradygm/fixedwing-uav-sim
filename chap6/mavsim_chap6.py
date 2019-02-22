@@ -15,7 +15,8 @@ from chap4.mav_dynamics import mav_dynamics
 from chap4.wind_simulation import wind_simulation
 from chap5.trim import compute_trim
 from chap6.autopilot import autopilot
-# from tools.signals import signals
+sys.path.append('../tools')
+from signals import signals
 
 # initialize the visualization
 VIDEO = False  # True==write video, False==don't write video
@@ -44,7 +45,9 @@ from message_types.msg_autopilot import msg_autopilot
 commands = msg_autopilot()
 # Va_command = signals(dc_offset=25.0, amplitude=3.0, start_time=2.0, frequency = 0.01)
 # h_command = signals(dc_offset=100.0, amplitude=10.0, start_time=0.0, frequency = 0.02)
-# chi_command = signals(dc_offset=np.radians(180), amplitude=np.radians(45), start_time=5.0, frequency = 0.015)
+chi_command = signals(dc_offset=np.radians(180), amplitude=np.radians(45), start_time=5.0, frequency = 0.015)
+# chi_command = signals(dc_offset=np.radians(0), amplitude=np.radians(45), start_time=5.0, frequency = 0.005)
+
 
 # initialize the simulation time
 sim_time = SIM.start_time
@@ -58,17 +61,18 @@ while sim_time < SIM.end_time:
     # commands.airspeed_command = Va_command.square(sim_time)
     # commands.course_command = chi_command.square(sim_time)
     # commands.altitude_command = h_command.square(sim_time)
-    if sim_time >= 28:
+    if sim_time >= 5:
         a = 1
     delta, commanded_state = ctrl.update(commands, estimated_state)
-
-    delta[0] = trim_input[0]
-    # delta[1] = -.2
-    delta[2] = trim_input[2]
+    #(delta_a, delta_e, delta_r, delta_t)
+    # delta[0] = trim_input[0]
+    delta[1] = trim_input[1]
+    # delta[2] = trim_input[2]
     delta[3] = trim_input[3]
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
+    current_wind = np.zeros((6, 1))
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------

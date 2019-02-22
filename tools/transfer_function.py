@@ -2,7 +2,7 @@
 transfer function block (SISO)
 """
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 class transfer_function:
     def __init__(self, num, den, Ts):

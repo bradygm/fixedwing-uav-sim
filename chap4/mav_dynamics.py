@@ -290,8 +290,8 @@ class mav_dynamics:
         self.msg_true_state.theta = theta
         self.msg_true_state.psi = psi
         self.msg_true_state.Vg = self._Vg
-        self.msg_true_state.gamma = self._chi
-        self.msg_true_state.chi = self._gamma
+        self.msg_true_state.gamma = self._gamma
+        self.msg_true_state.chi = self._chi
         self.msg_true_state.p = self._state.item(10)
         self.msg_true_state.q = self._state.item(11)
         self.msg_true_state.r = self._state.item(12)

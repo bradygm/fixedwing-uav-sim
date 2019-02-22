@@ -8,6 +8,8 @@ import sys
 import numpy as np
 sys.path.append('..')
 import parameters.control_parameters as AP
+sys.path.append('../tools')
+from transfer_function import transfer_function
 from chap6.pid_control import pid_control, pi_control, pd_control_with_rate
 from message_types.msg_state import msg_state
 
@@ -29,10 +31,10 @@ class autopilot:
                         ki=AP.sideslip_ki,
                         Ts=ts_control,
                         limit=np.radians(45))
-        # self.yaw_damper = transfer_function(
-        #                 num=np.array([[AP.yaw_damper_kp, 0]]),
-        #                 den=np.array([[1, 1 / AP.yaw_damper_tau_r]]),
-        #                 Ts=ts_control)
+        self.yaw_damper = transfer_function(
+                        num=np.array([[AP.yaw_damper_kp, 0]]),
+                        den=np.array([[1, 1 / AP.yaw_damper_tau_r]]),
+                        Ts=ts_control)
 
         # instantiate longitudinal controllers
         self.pitch_from_elevator = pd_control_with_rate(
@@ -54,9 +56,11 @@ class autopilot:
     def update(self, cmd, state):
 
         # lateral autopilot
-        phi_c = np.radians(10)
-        delta_a = self.roll_from_aileron.update(phi_c, state.phi,state.p)
-        delta_r = 0.
+        course_wrapped = self.wrap(state.chi,cmd.course_command)
+        phi_c = self.course_from_roll.update(course_wrapped, state.chi)
+        # phi_c = np.radians(45)
+        delta_a = self.roll_from_aileron.update(phi_c, state.phi, state.p)
+        delta_r = self.yaw_damper.update(state.r)
 
         # longitudinal autopilot
         h_c = 0.
@@ -65,7 +69,8 @@ class autopilot:
         delta_t = 0.
 
         # construct output and commanded states
-        delta = np.array([[delta_e], [delta_a], [delta_r], [delta_t]])
+        #(delta_a, delta_e, delta_r, delta_t)
+        delta = np.array([[delta_a], [delta_e], [delta_r], [delta_t]])
         self.commanded_state.h = cmd.altitude_command
         self.commanded_state.Va = cmd.airspeed_command
         self.commanded_state.phi = phi_c
@@ -81,3 +86,10 @@ class autopilot:
         else:
             output = input
         return output
+
+    def wrap(self, current, input):
+        if (input - current) > np.pi:
+            input -= 2*np.pi
+        elif (input - current) < -np.pi:
+            input += 2*np.pi
+        return input

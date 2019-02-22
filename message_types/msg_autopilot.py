@@ -11,6 +11,6 @@ part of mavsim_python
 class msg_autopilot:
     def __init__(self):
         self.airspeed_command = 0.0  # commanded airspeed m/s
-        self.course_command = 0.0  # commanded course angle in rad
+        self.course_command = 0.15  # commanded course angle in rad
         self.altitude_command = 0.0  # commanded altitude in m
         self.phi_feedforward = 0.0  # feedforward command for roll angle

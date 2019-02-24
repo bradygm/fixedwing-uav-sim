@@ -43,8 +43,8 @@ delta = trim_input  # set input to constant constant trim input
 # autopilot commands
 from message_types.msg_autopilot import msg_autopilot
 commands = msg_autopilot()
-# Va_command = signals(dc_offset=25.0, amplitude=3.0, start_time=2.0, frequency = 0.01)
-# h_command = signals(dc_offset=100.0, amplitude=10.0, start_time=0.0, frequency = 0.02)
+Va_command = signals(dc_offset=25.0, amplitude=3.0, start_time=2.0, frequency = 0.01)
+h_command = signals(dc_offset=200.0, amplitude=10.0, start_time=0.0, frequency = 0.02)
 chi_command = signals(dc_offset=np.radians(180), amplitude=np.radians(45), start_time=5.0, frequency = 0.015)
 # chi_command = signals(dc_offset=np.radians(0), amplitude=np.radians(45), start_time=5.0, frequency = 0.005)
 
@@ -58,17 +58,17 @@ while sim_time < SIM.end_time:
 
     #-------controller-------------
     estimated_state = mav.msg_true_state  # uses true states in the control
-    # commands.airspeed_command = Va_command.square(sim_time)
-    # commands.course_command = chi_command.square(sim_time)
-    # commands.altitude_command = h_command.square(sim_time)
+    commands.airspeed_command = Va_command.square(sim_time)
+    commands.course_command = chi_command.square(sim_time)
+    commands.altitude_command = h_command.square(sim_time)
     if sim_time >= 5:
         a = 1
     delta, commanded_state = ctrl.update(commands, estimated_state)
     #(delta_a, delta_e, delta_r, delta_t)
     # delta[0] = trim_input[0]
-    delta[1] = trim_input[1]
+    # delta[1] = trim_input[1]
     # delta[2] = trim_input[2]
-    delta[3] = trim_input[3]
+    delta[3] += trim_input[3]
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector

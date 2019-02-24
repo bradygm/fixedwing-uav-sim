@@ -33,15 +33,25 @@ yaw_damper_tau_r = 0.5
 yaw_damper_kp = .75
 
 #----------pitch loop-------------
-pitch_kp = 0.
-pitch_kd = 0.
-K_theta_DC = 0.
+omega_n_theta = 5
+zeta_theta = .707
+pitch_kp = -(omega_n_theta**2 - TF.T_theta_delta_e_a2)/TF.T_theta_delta_e_a3 #why negative??
+pitch_kd = 4.*(2.*zeta_theta*omega_n_theta - TF.T_theta_delta_e_a1)/TF.T_theta_delta_e_a3
+K_theta_DC = pitch_kp*TF.T_theta_delta_e_a3/omega_n_theta**2
 
 #----------altitude loop-------------
-altitude_kp = 0.
-altitude_ki = 0.
+separation_factor_h = 12
+omega_n_h = omega_n_theta/separation_factor_h
+zeta_h = 2.
+altitude_kp = 2.*zeta_h*omega_n_h/(K_theta_DC*Va0)
+altitude_ki = omega_n_h**2/(K_theta_DC*Va0)
 altitude_zone = 0.
 
 #---------airspeed hold using throttle---------------
-airspeed_throttle_kp = 0.
-airspeed_throttle_ki = 0.
+omega_n_va = 8
+zeta_va = 3
+airspeed_throttle_kp = omega_n_va**2/TF.T_Va_delta_t_a2[0]
+airspeed_throttle_ki = (2.*zeta_va*omega_n_va - TF.T_Va_delta_t_a1[0])/TF.T_Va_delta_t_a2[0]
+
+
+altitude_hold_zone = 50 #Not sure what is a good number for this. Also, on slides, the pi controllers have a 0 and P

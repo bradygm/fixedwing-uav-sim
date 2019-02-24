@@ -58,15 +58,17 @@ class autopilot:
         # lateral autopilot
         course_wrapped = self.wrap(state.chi,cmd.course_command)
         phi_c = self.course_from_roll.update(course_wrapped, state.chi)
-        # phi_c = np.radians(45)
+        # phi_c = np.radians(0)
         delta_a = self.roll_from_aileron.update(phi_c, state.phi, state.p)
         delta_r = self.yaw_damper.update(state.r)
 
         # longitudinal autopilot
-        h_c = 0.
-        theta_c = 0.
-        delta_e = 0.
-        delta_t = 0.
+        h_c = cmd.altitude_command
+        h_c_filtered = self.saturate(h_c, state.h - AP.altitude_hold_zone, state.h + AP.altitude_hold_zone)
+        theta_c = self.altitude_from_pitch.update(h_c_filtered,state.h)
+        # theta_c = np.radians(15)
+        delta_e = self.pitch_from_elevator.update(theta_c, state.theta, state.q)
+        delta_t = self.airspeed_from_throttle.update(cmd.airspeed_command, state.Va)
 
         # construct output and commanded states
         #(delta_a, delta_e, delta_r, delta_t)

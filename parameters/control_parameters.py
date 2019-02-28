@@ -15,6 +15,8 @@ roll_kp = omega_n_phi**2/TF.T_phi_delta_a_a2
 roll_kd = (2.*zeta_phi*omega_n_phi - TF.T_phi_delta_a_a1)/TF.T_phi_delta_a_a2
 # roll_kp = .3
 roll_kd = -roll_kd*2.
+roll_kd = .06
+roll_kp = .8
 
 #----------course loop-------------
 separation_factor_chi = 8
@@ -23,6 +25,8 @@ zeta_chi = 5
 course_kp = 2.*zeta_chi*omega_n_chi*Va0/gravity #negativ gravity??
 course_ki = omega_n_chi**2*Va0/gravity
 course_ki = course_ki*3 #This could use more tuning. Once the output isn't railed, the integrator has problems.
+course_ki = 2
+course_kp = 3
 
 #----------sideslip loop-------------
 sideslip_ki = 0.
@@ -31,6 +35,8 @@ sideslip_kp = 0.
 # ----------yaw damper-------------
 yaw_damper_tau_r = 0.5
 yaw_damper_kp = .75
+# yaw_damper_tau_r = 1.
+# yaw_damper_kp = 0.
 
 #----------pitch loop-------------
 omega_n_theta = 5

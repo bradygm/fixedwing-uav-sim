@@ -68,7 +68,7 @@ while sim_time < SIM.end_time:
     # delta[0] = trim_input[0]
     # delta[1] = trim_input[1]
     # delta[2] = trim_input[2]
-    delta[3] += trim_input[3]
+    # delta[3] += trim_input[3]
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector

@@ -68,7 +68,7 @@ class autopilot:
         theta_c = self.altitude_from_pitch.update(h_c_filtered,state.h)
         # theta_c = np.radians(15)
         delta_e = self.pitch_from_elevator.update(theta_c, state.theta, state.q)
-        delta_t = self.airspeed_from_throttle.update(cmd.airspeed_command, state.Va)
+        delta_t = self.airspeed_from_throttle.update(cmd.airspeed_command, state.Va) + .67675
 
         # construct output and commanded states
         #(delta_a, delta_e, delta_r, delta_t)

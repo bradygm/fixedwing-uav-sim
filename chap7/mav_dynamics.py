@@ -114,7 +114,8 @@ class mav_dynamics:
         self.sensors.accel_z = self._forces[2]/MAV.mass - MAV.gravity*np.cos(theta)*np.cos(phi) + np.random.normal(0, SENSOR.accel_sigma, 1)
         self.sensors.static_pressure = MAV.rho*MAV.gravity*-self._state.item(2) + np.random.normal(0, SENSOR.static_pres_sigma, 1)
         self.sensors.diff_pressure = MAV.rho*self._Va**2/2. + np.random.normal(0, SENSOR.diff_pres_sigma, 1)
-        self.sensors.mag = Quaternion2Rotation(self._state[6:10]).T@Euler2Rotation(0,-66*np.pi/180.,12.5*np.pi/180.)@np.array([[1.],[0.],[0.]]) + SENSOR.mag_beta + np.random.normal(0, SENSOR.mag_sigma, 1)
+        # self.sensors.mag = Quaternion2Rotation(self._state[6:10]).T@Euler2Rotation(0,-66*np.pi/180.,12.5*np.pi/180.)@np.array([[1.],[0.],[0.]]) \
+        #                    + SENSOR.mag_beta + np.random.normal(0, SENSOR.mag_sigma, 1)
         if self._t_gps >= SENSOR.ts_gps:
             self._gps_eta_n = np.exp(-SENSOR.gps_beta*SENSOR.ts_gps)*self._gps_eta_n + np.random.normal(0, SENSOR.gps_n_sigma, 1)
             self._gps_eta_e = np.exp(-SENSOR.gps_beta*SENSOR.ts_gps)*self._gps_eta_e + np.random.normal(0, SENSOR.gps_e_sigma, 1)

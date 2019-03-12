@@ -106,28 +106,29 @@ class mav_dynamics:
     def update_sensors(self):
         "Return value of sensors on MAV: gyros, accels, static_pressure, dynamic_pressure, GPS"
         phi, theta, psi = Quaternion2Euler(self._state[6:10])
-        self.sensors.gyro_x = self._state.item(10) + SENSOR.gyro_x_bias + np.random.normal(0, SENSOR.gyro_sigma, 1)
-        self.sensors.gyro_y = self._state.item(11) + SENSOR.gyro_y_bias + np.random.normal(0, SENSOR.gyro_sigma, 1)
-        self.sensors.gyro_z = self._state.item(12) + SENSOR.gyro_z_bias + np.random.normal(0, SENSOR.gyro_sigma, 1)
-        self.sensors.accel_x = self._forces[0]/MAV.mass + MAV.gravity*np.sin(theta) + np.random.normal(0, SENSOR.accel_sigma, 1)
-        self.sensors.accel_y = self._forces[1]/MAV.mass - MAV.gravity*np.cos(theta)*np.sin(phi) + np.random.normal(0, SENSOR.accel_sigma, 1)
-        self.sensors.accel_z = self._forces[2]/MAV.mass - MAV.gravity*np.cos(theta)*np.cos(phi) + np.random.normal(0, SENSOR.accel_sigma, 1)
-        self.sensors.static_pressure = MAV.rho*MAV.gravity*-self._state.item(2) + np.random.normal(0, SENSOR.static_pres_sigma, 1)
-        self.sensors.diff_pressure = MAV.rho*self._Va**2/2. + np.random.normal(0, SENSOR.diff_pres_sigma, 1)
+        self.sensors.gyro_x = self._state.item(10) + SENSOR.gyro_x_bias + SENSOR.gyro_sigma*np.random.randn()
+        self.sensors.gyro_y = self._state.item(11) + SENSOR.gyro_y_bias + SENSOR.gyro_sigma*np.random.randn()
+        self.sensors.gyro_z = self._state.item(12) + SENSOR.gyro_z_bias + SENSOR.gyro_sigma*np.random.randn()
+        self.sensors.accel_x = self._forces[0]/MAV.mass + MAV.gravity*np.sin(theta) + SENSOR.accel_sigma*np.random.randn()
+        self.sensors.accel_y = self._forces[1]/MAV.mass - MAV.gravity*np.cos(theta)*np.sin(phi) + SENSOR.accel_sigma*np.random.randn()
+        self.sensors.accel_z = self._forces[2]/MAV.mass - MAV.gravity*np.cos(theta)*np.cos(phi) + SENSOR.accel_sigma*np.random.randn()
+        self.sensors.static_pressure = MAV.rho*MAV.gravity*-self._state.item(2) + SENSOR.static_pres_sigma*np.random.randn()
+        self.sensors.diff_pressure = MAV.rho*self._Va**2/2. + SENSOR.diff_pres_sigma*np.random.randn()
         # self.sensors.mag = Quaternion2Rotation(self._state[6:10]).T@Euler2Rotation(0,-66*np.pi/180.,12.5*np.pi/180.)@np.array([[1.],[0.],[0.]]) \
         #                    + SENSOR.mag_beta + np.random.normal(0, SENSOR.mag_sigma, 1)
         if self._t_gps >= SENSOR.ts_gps:
-            self._gps_eta_n = np.exp(-SENSOR.gps_beta*SENSOR.ts_gps)*self._gps_eta_n + np.random.normal(0, SENSOR.gps_n_sigma, 1)
-            self._gps_eta_e = np.exp(-SENSOR.gps_beta*SENSOR.ts_gps)*self._gps_eta_e + np.random.normal(0, SENSOR.gps_e_sigma, 1)
-            self._gps_eta_h = np.exp(-SENSOR.gps_beta*SENSOR.ts_gps)*self._gps_eta_h + np.random.normal(0, SENSOR.gps_h_sigma, 1)
+            self._gps_eta_n = np.exp(-SENSOR.gps_beta*SENSOR.ts_gps)*self._gps_eta_n + SENSOR.gps_n_sigma*np.random.randn()
+            self._gps_eta_e = np.exp(-SENSOR.gps_beta*SENSOR.ts_gps)*self._gps_eta_e + SENSOR.gps_e_sigma*np.random.randn()
+            self._gps_eta_h = np.exp(-SENSOR.gps_beta*SENSOR.ts_gps)*self._gps_eta_h + SENSOR.gps_h_sigma*np.random.randn()
             self.sensors.gps_n = self._state.item(0) + self._gps_eta_n
             self.sensors.gps_e = self._state.item(1) + self._gps_eta_e
             self.sensors.gps_h = self._state.item(2) + self._gps_eta_h
-            self.sensors.gps_Vg = np.sqrt((self._Va*np.cos(phi) + self._wind[0])**2 + (self._Va*np.sin(phi) + self._wind[1])**2) + np.random.normal(0, SENSOR.gps_Vg_sigma, 1)
-            self.sensors.gps_course = np.arctan2(self._Va*np.sin(phi) + self._wind[1],self._Va*np.cos(phi) + self._wind[0])+ np.random.normal(0, SENSOR.gps_course_sigma, 1)
+            self.sensors.gps_Vg = np.sqrt((self._Va*np.cos(psi) + self._wind.item(0))**2 + (self._Va*np.sin(psi) + self._wind.item(1))**2) + SENSOR.gps_Vg_sigma*np.random.randn()
+            self.sensors.gps_course = np.arctan2(self._Va*np.sin(psi) + self._wind.item(1), self._Va*np.cos(psi) + self._wind.item(0)) + SENSOR.gps_course_sigma*np.random.randn()
             self._t_gps = 0.
         else:
             self._t_gps += self._ts_simulation
+        return self.sensors
 
     ###################################
     # private functions

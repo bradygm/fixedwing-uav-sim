@@ -8,7 +8,7 @@ sigma = .05
 Va0 = 25
 
 #----------roll loop-------------
-omega_n_phi = 9.2
+omega_n_phi = 2.2 #9.2
 zeta_phi = .707
 roll_kp = omega_n_phi**2/TF.T_phi_delta_a_a2
 # roll_omega = np.sqrt(roll_kp*TF.T_phi_delta_a_a2)
@@ -39,7 +39,7 @@ yaw_damper_kp = .75
 # yaw_damper_kp = 0.
 
 #----------pitch loop-------------
-omega_n_theta = 5
+omega_n_theta = 4 #5
 zeta_theta = .707
 pitch_kp = -(omega_n_theta**2 - TF.T_theta_delta_e_a2)/TF.T_theta_delta_e_a3 #why negative??
 pitch_kd = 4.*(2.*zeta_theta*omega_n_theta - TF.T_theta_delta_e_a1)/TF.T_theta_delta_e_a3

@@ -38,10 +38,10 @@ path_follow = path_follower()
 from message_types.msg_path import msg_path
 path = msg_path()
 path.flag = 'line'
-#path.flag = 'orbit'
+path.flag = 'orbit'
 if path.flag == 'line':
     path.line_origin = np.array([[0.0, 0.0, -100.0]]).T
-    path.line_direction = np.array([[0.5, 1.0, 0.0]]).T
+    path.line_direction = np.array([[0.5, 1.0, -.1]]).T
     path.line_direction = path.line_direction / np.linalg.norm(path.line_direction)
 else:  # path.flag == 'orbit'
     path.orbit_center = np.array([[0.0, 0.0, -100.0]]).T  # center of the orbit
@@ -55,23 +55,24 @@ sim_time = SIM.start_time
 print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
     #-------observer-------------
-    measurements = mav.sensors()  # get sensor measurements
+    measurements = mav.update_sensors()  # get sensor measurements
     estimated_state = obsv.update(measurements)  # estimate states from measurements
 
     #-------path follower-------------
-    autopilot_commands = path_follow.update(path, estimated_state)
-    #autopilot_commands = path_follow.update(path, mav.true_state)  # for debugging
+    # autopilot_commands = path_follow.update(path, estimated_state)
+    autopilot_commands = path_follow.update(path, mav.msg_true_state)  # for debugging
 
     #-------controller-------------
     delta, commanded_state = ctrl.update(autopilot_commands, estimated_state)
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
-    mav.update(delta, current_wind)  # propagate the MAV dynamics
+    current_wind = np.zeros((6, 1))
+    mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------
-    path_view.update(path, mav.true_state)  # plot path and MAV
-    data_view.update(mav.true_state, # true states
+    path_view.update(path, mav.msg_true_state)  # plot path and MAV
+    data_view.update(mav.msg_true_state, # true states
                      estimated_state, # estimated states
                      commanded_state, # commanded states
                      SIM.ts_simulation)

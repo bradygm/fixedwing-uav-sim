@@ -11,8 +11,9 @@ import numpy as np
 import pyqtgraph as pg
 import pyqtgraph.opengl as gl
 import pyqtgraph.Vector as Vector
+sys.path.append('../tools')
 
-from tools.rotations import Euler2Rotation
+from angleConversions import Euler2Rotation
 
 class path_viewer():
     def __init__(self):
@@ -52,7 +53,7 @@ class path_viewer():
         # attitude of mav as a rotation matrix R from body to inertial
         R = Euler2Rotation(state.phi, state.theta, state.psi)
         # rotate and translate points defining mav
-        rotated_points = self._rotate_points(self.points, R)
+        rotated_points = self._rotate_points(self.points, R.T)
         translated_points = self._translate_points(rotated_points, mav_position)
         # convert North-East Down to East-North-Up for rendering
         R = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])

@@ -33,12 +33,18 @@ def Quaternion2Rotation(e): #body to inertial
     return R.squeeze()
 
 def Euler2Rotation(phi, theta, psi):
-    cy = np.cos(psi * 0.5)
-    sy = np.sin(psi * 0.5)
-    ct = np.cos(theta * 0.5)
-    st = np.sin(theta * 0.5)
-    cp = np.cos(phi * 0.5)
-    sp = np.sin(phi * 0.5)
+    # cy = np.cos(psi * 0.5)
+    # sy = np.sin(psi * 0.5)
+    # ct = np.cos(theta * 0.5)
+    # st = np.sin(theta * 0.5)
+    # cp = np.cos(phi * 0.5)
+    # sp = np.sin(phi * 0.5)
+    cy = np.cos(psi)
+    sy = np.sin(psi)
+    ct = np.cos(theta)
+    st = np.sin(theta)
+    cp = np.cos(phi)
+    sp = np.sin(phi)
     R = np.array([[(ct*cy),(ct*sy),(-st)],
                   [(sp*st*cy - cp*sy),(sp*st*sy + cp*cy),(sp*ct)],
                   [(cp*st*cy + sp*sy),(cp*st*sy - sp*cy),(cp*ct)]])

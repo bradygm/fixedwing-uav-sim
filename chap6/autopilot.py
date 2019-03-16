@@ -59,6 +59,7 @@ class autopilot:
         course_wrapped = self.wrap(state.chi,cmd.course_command)
         phi_c = self.course_from_roll.update(course_wrapped, state.chi)
         # phi_c = np.radians(0)
+        phi_c += cmd.phi_feedforward
         delta_a = self.roll_from_aileron.update(phi_c, state.phi, state.p)
         delta_r = self.yaw_damper.update(state.r)
 
@@ -68,7 +69,7 @@ class autopilot:
         theta_c = self.altitude_from_pitch.update(h_c_filtered,state.h)
         # theta_c = np.radians(15)
         delta_e = self.pitch_from_elevator.update(theta_c, state.theta, state.q)
-        delta_t = self.airspeed_from_throttle.update(cmd.airspeed_command, state.Va) + .67675
+        delta_t = self.airspeed_from_throttle.update(cmd.airspeed_command, state.Va) + .67675 #Added trim throttle
 
         # construct output and commanded states
         #(delta_a, delta_e, delta_r, delta_t)
@@ -90,8 +91,8 @@ class autopilot:
         return output
 
     def wrap(self, current, input):
-        if (input - current) > np.pi:
+        while (input - current) > np.pi:
             input -= 2*np.pi
-        elif (input - current) < -np.pi:
+        while (input - current) < -np.pi:
             input += 2*np.pi
         return input

@@ -138,9 +138,8 @@ class ekf_attitude:
         y = np.array([measurement.accel_x, measurement.accel_y, measurement.accel_z])
         for i in range(0, 3):
             if np.abs(y.item(i)-h.item(i)) < threshold:
-                Ci = C[i,:] #check dimension??
+                Ci = C[i,:]
                 L = self.P@Ci.T/(self.R_accel[i,i] + Ci@self.P@Ci.T)
-                # temp = L*Ci #This supposed to be 2x2??
                 # self.P = (np.eye(2) - L@Ci)@self.P
                 self.P = (np.eye(2) - np.outer(L, Ci))@self.P
 
@@ -165,6 +164,8 @@ class ekf_position:
                            [0., 0., 0., SENSOR.gps_course_sigma**2, 0., 0.]])
                            # [0., 0., 0., 0., SENSOR.gps_n_sigma**2, 0.],# What would this be??
                            # [0., 0., 0., 0., 0., SENSOR.gps_e_sigma**2]]) # What would this be??
+        self.R_pseudo = np.array([[SENSOR.gps_n_sigma**2, 0.],
+                                  [0., SENSOR.gps_n_sigma**2]]) #What would this be??
         self.N = 10  # number of prediction step per sample
         self.Ts = (SIM.ts_control / self.N)
         self.xhat = np.array([[0., 0., 25., 0., 0., 0., 0.]]).T #Could initialize better??
@@ -215,7 +216,7 @@ class ekf_position:
         return _h
 
     def h_pseudo(self, x, state):
-        # measurement model for wind triangale pseudo measurement
+        # measurement model for wind triangle pseudo measurement
         _h = np.array([[state.Va*np.cos(x.item(6)) + x.item(4) - x.item(2)*np.cos(x.item(3))],
                        [state.Va*np.sin(x.item(6)) + x.item(5) - x.item(2)*np.sin(x.item(3))]])
         return _h
@@ -230,7 +231,7 @@ class ekf_position:
             # update P with continuous time model
             # self.P = self.P + self.Ts * (A @ self.P + self.P @ A.T + self.Q + G @ self.Q_gyro @ G.T)
             # convert to discrete time models
-            A_d = np.eye(7) + A*self.Ts + A@A*self.Ts**2./2.
+            A_d = np.eye(7) + A*self.Ts + (A@A*self.Ts**2.)/2.
             # update P with discrete time model
             self.P = A_d@self.P@A_d.T + self.Q
 
@@ -240,11 +241,11 @@ class ekf_position:
         C = jacobian(self.h_pseudo, self.xhat, state)
         y = np.array([[0, 0]])
         for i in range(0, 2):
-            Ci = C[i,:]
-            L = self.P@Ci.T/(self.R[i,i] + Ci@self.P@Ci.T)
+            Ci = C[i, :]
+            L = self.P@Ci.T/(self.R_pseudo[i, i] + Ci@self.P@Ci.T)
             self.P = (np.eye(7) - np.outer(L, Ci))@self.P
             change = L * (y.item(i) - h.item(i))
-            self.xhat = self.xhat + np.reshape(change, (7,1))
+            self.xhat = self.xhat + np.reshape(change, (7, 1))
 
         # only update GPS when one of the signals changes
         if (measurement.gps_n != self.gps_n_old) \
@@ -256,11 +257,11 @@ class ekf_position:
             C = jacobian(self.h_gps, self.xhat, state)
             y = np.array([measurement.gps_n, measurement.gps_e, measurement.gps_Vg, measurement.gps_course])
             for i in range(0, 4):
-                Ci = C[i,:]
-                L = self.P@Ci.T/(self.R[i,i] + Ci@self.P@Ci.T)
+                Ci = C[i, :]
+                L = self.P@Ci.T/(self.R[i, i] + Ci@self.P@Ci.T)
                 self.P = (np.eye(7) - np.outer(L, Ci))@self.P
                 change = L * (y.item(i) - h.item(i))
-                self.xhat = self.xhat + np.reshape(change, (7,1))
+                self.xhat = self.xhat + np.reshape(change, (7, 1))
             # update stored GPS signals
             self.gps_n_old = measurement.gps_n
             self.gps_e_old = measurement.gps_e

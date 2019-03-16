@@ -59,10 +59,20 @@ class path_follower:
             lambda_direction = -1
         chi_command = loopyThang_wrap + lambda_direction*(np.pi/2. + atan(self.k_orbit*((d - path.orbit_radius)/path.orbit_radius)))
 
+        #Solve for feedforward term
+        wd = 0. #Assume wind in down direction is zero
+        a1 = state.wn*cos(state.chi) + state.we*sin(state.chi)
+        a2 = np.sqrt(state.Va**2 - (state.wn*sin(state.chi) - state.we*cos(state.chi))**2 - wd**2)
+        if state.Va == 0:
+            state.Va = .001
+        b1 = self.gravity*path.orbit_radius*np.sqrt((state.Va**2-(state.wn*sin(state.chi) - state.we*cos(state.chi))**2 - wd**2)/(state.Va**2 - wd**2))
+
         self.autopilot_commands.airspeed_command = 25.
         self.autopilot_commands.course_command = chi_command
         self.autopilot_commands.altitude_command = -path.orbit_center.item(2)
-        self.autopilot_commands.phi_feedforward = 0.
+        # self.autopilot_commands.phi_feedforward = atan(state.Va**2/(self.gravity*path.orbit_radius))
+        self.autopilot_commands.phi_feedforward = (a1 + a2)**2/b1
+
 
     def _wrap(self, chi_c, chi):
         while chi_c-chi > np.pi:

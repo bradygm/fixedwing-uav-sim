@@ -53,7 +53,7 @@ class path_viewer():
         # attitude of mav as a rotation matrix R from body to inertial
         R = Euler2Rotation(state.phi, state.theta, state.psi)
         # rotate and translate points defining mav
-        rotated_points = self._rotate_points(self.points, R.T)
+        rotated_points = self._rotate_points(self.points, R.T) #Whay had to transpose??
         translated_points = self._translate_points(rotated_points, mav_position)
         # convert North-East Down to East-North-Up for rendering
         R = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])

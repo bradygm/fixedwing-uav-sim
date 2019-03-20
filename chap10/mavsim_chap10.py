@@ -38,7 +38,7 @@ path_follow = path_follower()
 from message_types.msg_path import msg_path
 path = msg_path()
 path.flag = 'line'
-# path.flag = 'orbit'
+path.flag = 'orbit'
 if path.flag == 'line':
     path.line_origin = np.array([[0.0, 0.0, -100.0]]).T
     path.line_direction = np.array([[0.5, 1.0, -.1]]).T

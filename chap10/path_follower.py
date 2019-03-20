@@ -9,7 +9,7 @@ class path_follower:
     def __init__(self):
         self.chi_inf = np.pi/4  # approach angle for large distance from straight-line path
         self.k_path = .1  # proportional gain for straight-line path following
-        self.k_orbit = 2.3  # proportional gain for orbit following
+        self.k_orbit = 7.3  # proportional gain for orbit following, why so high??
         self.gravity = 9.8
         self.autopilot_commands = msg_autopilot()  # message sent to autopilot
 
@@ -44,7 +44,7 @@ class path_follower:
 
 
 
-        self.autopilot_commands.airspeed_command = 25. #Do I just hard code this??
+        self.autopilot_commands.airspeed_command = path.airspeed
         self.autopilot_commands.course_command = chi_command
         self.autopilot_commands.altitude_command = h_d
         self.autopilot_commands.phi_feedforward = 0.
@@ -57,7 +57,8 @@ class path_follower:
             lambda_direction = 1
         else:
             lambda_direction = -1
-        chi_command = loopyThang_wrap + lambda_direction*(np.pi/2. + atan(self.k_orbit*((d - path.orbit_radius)/path.orbit_radius)))
+        crossTrackError = (d - path.orbit_radius)/path.orbit_radius
+        chi_command = loopyThang_wrap + lambda_direction*(np.pi/2. + atan(self.k_orbit*(crossTrackError)))
 
         #Solve for feedforward term
         wd = 0. #Assume wind in down direction is zero
@@ -67,11 +68,15 @@ class path_follower:
             state.Va = .001
         b1 = self.gravity*path.orbit_radius*np.sqrt((state.Va**2-(state.wn*sin(state.chi) - state.we*cos(state.chi))**2 - wd**2)/(state.Va**2 - wd**2))
 
-        self.autopilot_commands.airspeed_command = 25.
+        self.autopilot_commands.airspeed_command = path.airspeed
         self.autopilot_commands.course_command = chi_command
         self.autopilot_commands.altitude_command = -path.orbit_center.item(2)
+        # if crossTrackError < 10.25:
         # self.autopilot_commands.phi_feedforward = atan(state.Va**2/(self.gravity*path.orbit_radius))
         self.autopilot_commands.phi_feedforward = (a1 + a2)**2/b1
+        # else:
+        # self.autopilot_commands.phi_feedforward = 0.
+
 
 
     def _wrap(self, chi_c, chi):

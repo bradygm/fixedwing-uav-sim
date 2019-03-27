@@ -153,28 +153,30 @@ class ekf_position:
         tuned_noise = .00000000000000001
         self.Q = np.array([[tuned_noise, 0., 0., 0., 0., 0., 0.],
                            [0., tuned_noise, 0., 0., 0., 0., 0.],
-                           [0., 0., tuned_noise, 0., 0., 0., 0.],
-                           [0., 0., 0., tuned_noise, 0., 0., 0.],
-                           [0., 0., 0., 0., tuned_noise, 0., 0.],
-                           [0., 0., 0., 0., 0., tuned_noise, 0.],
-                           [0., 0., 0., 0., 0., 0., tuned_noise]])
+                           [0., 0., .001, 0., 0., 0., 0.],
+                           [0., 0., 0., .01, 0., 0., 0.],
+                           [0., 0., 0., 0., .0001, 0., 0.],
+                           [0., 0., 0., 0., 0., .0001, 0.],
+                           [0., 0., 0., 0., 0., 0., .001]])
         self.R = np.array([[SENSOR.gps_n_sigma**2, 0., 0., 0., 0., 0.],
                            [0., SENSOR.gps_e_sigma**2, 0., 0., 0., 0.],
-                           [0., 0., SENSOR.gps_Vg_sigma**2, 0., 0., 0.],
+                           [0., 0., SENSOR.gps_Vg_sigma**2/400, 0., 0., 0.],
                            [0., 0., 0., SENSOR.gps_course_sigma**2, 0., 0.]])
                            # [0., 0., 0., 0., SENSOR.gps_n_sigma**2, 0.],# What would this be??
                            # [0., 0., 0., 0., 0., SENSOR.gps_e_sigma**2]]) # What would this be??
-        self.R_pseudo = np.array([[SENSOR.gps_n_sigma**2, 0.],
-                                  [0., SENSOR.gps_n_sigma**2]]) #What would this be??
-        self.N = 10  # number of prediction step per sample
+        # self.R_pseudo = np.array([[SENSOR.static_pres_sigma**2, 0.],
+        #                           [0., SENSOR.static_pres_sigma**2]]) #What would this be??
+        self.R_pseudo = np.array([[1 ** 2, 0.],
+                                  [0., 1 ** 2]])  # What would this be??
+        self.N = 5  # number of prediction step per sample
         self.Ts = (SIM.ts_control / self.N)
         self.xhat = np.array([[0., 0., 25., 0., 0., 0., 0.]]).T #Could initialize better??
         self.P = np.array([[100**2, 0., 0., 0., 0., 0., 0.], #Start initialized??
                            [0., 100**2, 0., 0., 0., 0., 0.],
-                           [0., 0., 5**2, 0., 0., 0., 0.],
+                           [0., 0., 1**2, 0., 0., 0., 0.],
                            [0., 0., 0., np.pi**2, 0., 0., 0.],
-                           [0., 0., 0., 0., 10**2, 0., 0.],
-                           [0., 0., 0., 0., 0., 10**2, 0.],
+                           [0., 0., 0., 0., 1**2, 0., 0.],
+                           [0., 0., 0., 0., 0., 1**2, 0.],
                            [0., 0., 0., 0., 0., 0., np.pi**2]])
         self.gps_n_old = 9999
         self.gps_e_old = 9999
@@ -196,7 +198,7 @@ class ekf_position:
     def f(self, x, state):
         # system dynamics for propagation model: xdot = f(x, u)
         #pn, pe, Vg, chi, wn, we, psi
-        psi_dot = state.q*np.sin(state.phi)/np.cos(state.theta) + state.r*np.cos(state.phi)/np.cos(state.theta)#best way??
+        psi_dot = state.q*np.sin(state.phi)/np.cos(state.theta) + state.r*np.cos(state.phi)/np.cos(state.theta)
         _f = np.array([[x.item(2)*np.cos(x.item(3))],
                        [x.item(2)*np.sin(x.item(3))],
                        [((state.Va*np.cos(x.item(6)) + x.item(4))*(-state.Va*psi_dot*np.sin(x.item(6))) +
@@ -204,7 +206,7 @@ class ekf_position:
                        [MAV.gravity*np.tan(state.phi)*np.cos(x.item(3)-x.item(6))/x.item(2)],
                        [0.],
                        [0.],
-                       [state.q*np.sin(state.phi)/np.cos(state.theta) + state.r*np.cos(state.phi)/np.cos(state.theta)]])
+                       [psi_dot]])
         return _f
 
     def h_gps(self, x, state):
@@ -233,7 +235,7 @@ class ekf_position:
             # convert to discrete time models
             A_d = np.eye(7) + A*self.Ts + (A@A*self.Ts**2.)/2.
             # update P with discrete time model
-            self.P = A_d@self.P@A_d.T + self.Q
+            self.P = A_d@self.P@A_d.T + self.Q*self.Ts**2
 
     def measurement_update(self, state, measurement):
         # always update based on wind triangle pseudu measurement
@@ -267,6 +269,9 @@ class ekf_position:
             self.gps_e_old = measurement.gps_e
             self.gps_Vg_old = measurement.gps_Vg
             self.gps_course_old = measurement.gps_course
+        self.xhat[3] = self.wrap(self.xhat[3], 0)
+        self.xhat[6] = self.wrap(self.xhat[6], 0)
+
 
     def wrap(self, chi_c, chi):
         while chi_c-chi > np.pi:

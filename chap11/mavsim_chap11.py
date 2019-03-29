@@ -40,8 +40,8 @@ path_manage = path_manager()
 # waypoint definition
 from message_types.msg_waypoints import msg_waypoints
 waypoints = msg_waypoints()
-#waypoints.type = 'straight_line'
-waypoints.type = 'fillet'
+waypoints.type = 'straight_line'
+# waypoints.type = 'fillet'
 #waypoints.type = 'dubins'
 waypoints.num_waypoints = 4
 Va = PLAN.Va0
@@ -53,10 +53,18 @@ waypoints.ned[:, 0:waypoints.num_waypoints] \
 waypoints.airspeed[:, 0:waypoints.num_waypoints] \
     = np.array([[Va, Va, Va, Va]])
 waypoints.course[:, 0:waypoints.num_waypoints] \
-    = np.array([[0,
+    = np.array([[np.radians(0),
                  np.radians(45),
                  np.radians(45),
                  np.radians(-135)]])
+# waypoints.ned[:, 0:waypoints.num_waypoints] \
+#     = np.array([[0, 0, -100],
+#                 [1000, 0, -100]]).T
+# waypoints.airspeed[:, 0:waypoints.num_waypoints] \
+#     = np.array([[Va, Va]])
+# waypoints.course[:, 0:waypoints.num_waypoints] \
+#     = np.array([[np.radians(0),
+#                  np.radians(45)]])
 
 # initialize the simulation time
 sim_time = SIM.start_time
@@ -65,7 +73,7 @@ sim_time = SIM.start_time
 print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
     #-------observer-------------
-    measurements = mav.sensors()  # get sensor measurements
+    measurements = mav.update_sensors()  # get sensor measurements
     estimated_state = obsv.update(measurements)  # estimate states from measurements
 
     #-------path manager-------------
@@ -79,11 +87,11 @@ while sim_time < SIM.end_time:
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
-    mav.update(delta, current_wind)  # propagate the MAV dynamics
+    mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------
-    waypoint_view.update(waypoints, path, mav.true_state)  # plot path and MAV
-    data_view.update(mav.true_state, # true states
+    waypoint_view.update(waypoints, path, mav.msg_true_state)  # plot path and MAV
+    data_view.update(mav.msg_true_state, # true states
                      estimated_state, # estimated states
                      commanded_state, # commanded states
                      SIM.ts_simulation)

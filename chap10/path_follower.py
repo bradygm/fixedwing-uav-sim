@@ -14,9 +14,9 @@ class path_follower:
         self.autopilot_commands = msg_autopilot()  # message sent to autopilot
 
     def update(self, path, state):
-        if path.flag=='line':
+        if path.type=='line':
             self._follow_straight_line(path, state)
-        elif path.flag=='orbit':
+        elif path.type=='orbit':
             self._follow_orbit(path, state)
         return self.autopilot_commands
 

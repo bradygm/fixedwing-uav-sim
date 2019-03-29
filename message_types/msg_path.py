@@ -11,8 +11,10 @@ import numpy as np
 
 class msg_path:
     def __init__(self):
+        #flag for interaction with
+        self.flag_path_changed = True
         # flag='line' means straight line following, flag='orbit' means orbit following
-        self.flag = 'line'
+        self.type = 'line'
         # desired airspeed along the path
         self.airspeed = 25
         # origin of the straight path line (r)

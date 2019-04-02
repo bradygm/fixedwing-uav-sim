@@ -53,10 +53,12 @@ class path_follower:
         d = np.sqrt((state.pn - path.orbit_center.item(0))**2 + (state.pe - path.orbit_center.item(1))**2)
         loopyThang = atan2(state.pe - path.orbit_center.item(1),state.pn - path.orbit_center.item(0))
         loopyThang_wrap = self._wrap(loopyThang, state.chi)
-        if path.orbit_direction=='CW':
+        if path.orbit_direction == 'CW':
             lambda_direction = 1
+            self.autopilot_commands.phi_feedforward = atan(state.Va ** 2 / (self.gravity * path.orbit_radius))
         else:
             lambda_direction = -1
+            self.autopilot_commands.phi_feedforward = -atan(state.Va ** 2 / (self.gravity * path.orbit_radius))
         crossTrackError = (d - path.orbit_radius)/path.orbit_radius
         chi_command = loopyThang_wrap + lambda_direction*(np.pi/2. + atan(self.k_orbit*(crossTrackError)))
 
@@ -72,7 +74,7 @@ class path_follower:
         self.autopilot_commands.course_command = chi_command
         self.autopilot_commands.altitude_command = -path.orbit_center.item(2)
         # if crossTrackError < 10.25:
-        self.autopilot_commands.phi_feedforward = atan(state.Va**2/(self.gravity*path.orbit_radius))
+
         # self.autopilot_commands.phi_feedforward = (a1 + a2)**2/b1
         # else:
         # self.autopilot_commands.phi_feedforward = 0.

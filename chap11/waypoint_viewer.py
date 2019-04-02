@@ -227,7 +227,7 @@ class waypoint_viewer():
         return points
 
     def orbit_points(self, path):
-        N = 20
+        N = 10
         theta = 0
         theta_list = [theta]
         while theta < 2*np.pi:

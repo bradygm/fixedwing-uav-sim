@@ -38,7 +38,7 @@ path_follow = path_follower()
 from message_types.msg_path import msg_path
 path = msg_path()
 path.type = 'line'
-# path.type = 'orbit'
+path.type = 'orbit'
 if path.type == 'line':
     path.line_origin = np.array([[0.0, 0.0, -100.0]]).T
     path.line_direction = np.array([[0.5, 1.0, -.1]]).T
@@ -46,7 +46,7 @@ if path.type == 'line':
 else:  # path.flag == 'orbit'
     path.orbit_center = np.array([[0.0, 0.0, -100.0]]).T  # center of the orbit
     path.orbit_radius = 300.0  # radius of the orbit
-    path.orbit_direction = 'CW'  # orbit direction: 'CW'==clockwise, 'CCW'==counter clockwise
+    path.orbit_direction = 'CCW'  # orbit direction: 'CW'==clockwise, 'CCW'==counter clockwise
 
 # initialize the simulation time
 sim_time = SIM.start_time

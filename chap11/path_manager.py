@@ -39,60 +39,100 @@ class path_manager:
 
     def line_manager(self, waypoints, state):
         if waypoints.num_waypoints < 3:
-            if waypoints.flag_waypoints_changed == True:
+            if waypoints.flag_waypoints_changed:
                 self.path.flag = 'line'
                 self.path.line_origin = waypoints.ned[:, 0]
-                self.path.line_direction = waypoints.ned[:, 1]
+                self.path.line_direction = waypoints.ned[:, 1]-waypoints.ned[:,0]
                 self.path.line_direction = self.path.line_direction / np.linalg.norm(self.path.line_direction)
         else:
             if waypoints.flag_waypoints_changed:
                 self.path.flag = 'line'
-                self.num_waypoints = waypoints.num_waypoints
-                self.ptr_previous = 0
-                self.ptr_current = 1
-                self.ptr_next = 2
-                r = waypoints.ned[:, self.ptr_previous]
-                q_prev = (waypoints.ned[:, self.ptr_current]-waypoints.ned[:, self.ptr_previous])/np.linalg.norm(waypoints.ned[:, self.ptr_current]-waypoints.ned[:, self.ptr_previous])
-                q = (waypoints.ned[:, self.ptr_next]-waypoints.ned[:, self.ptr_current])/np.linalg.norm(waypoints.ned[:, self.ptr_next]-waypoints.ned[:, self.ptr_current])
-                n = (q_prev+q)/np.linalg.norm(q_prev+q)
-                self.halfspace_r = waypoints.ned[:, self.ptr_current]
-                self.halfspace_n = n
-                self.path.line_origin = r
-                self.path.line_direction = q_prev
+                self.initialize_pointers(waypoints)
+                self.updateLineHalfSpace(waypoints)
             if self.inHalfSpace(np.array([state.pn, state.pe, -state.h]).T):
                 self.increment_pointers()
                 self.path.flag_path_changed = True
-                r = waypoints.ned[:, self.ptr_previous]
-                q_prev = (waypoints.ned[:, self.ptr_current] - waypoints.ned[:, self.ptr_previous]) / np.linalg.norm(
-                    waypoints.ned[:, self.ptr_current] - waypoints.ned[:, self.ptr_previous])
-                q = (waypoints.ned[:, self.ptr_next] - waypoints.ned[:, self.ptr_current]) / np.linalg.norm(
-                    waypoints.ned[:, self.ptr_next] - waypoints.ned[:, self.ptr_current])
-                n = (q_prev + q) / np.linalg.norm(q_prev + q)
-                self.halfspace_r = waypoints.ned[:, self.ptr_current]
-                self.halfspace_n = n
-                self.path.line_origin = r
-                self.path.line_direction = q_prev
-
-
-
-
+                self.updateLineHalfSpace(waypoints)
 
 
     def fillet_manager(self, waypoints, radius, state):
-        a = 2
+        if waypoints.num_waypoints < 3:
+            if waypoints.flag_waypoints_changed:
+                self.path.flag = 'line'
+                self.path.line_origin = waypoints.ned[:, 0]
+                self.path.line_direction = waypoints.ned[:, 1]-waypoints.ned[:,0]
+                self.path.line_direction = self.path.line_direction / np.linalg.norm(self.path.line_direction)
+        else:
+            if waypoints.flag_waypoints_changed:
+                self.path.flag = 'line'
+                self.initialize_pointers(waypoints)
+                self.manager_state = 1
+                r = waypoints.ned[:, self.ptr_previous]
+                q_prev = (waypoints.ned[:, self.ptr_current] - waypoints.ned[:, self.ptr_previous]) / \
+                         np.linalg.norm(waypoints.ned[:, self.ptr_current] - waypoints.ned[:, self.ptr_previous])
+                q = (waypoints.ned[:, self.ptr_next] - waypoints.ned[:, self.ptr_current]) / \
+                    np.linalg.norm(waypoints.ned[:, self.ptr_next] - waypoints.ned[:, self.ptr_current])
+                angle = np.arccos(-q_prev.T @ q)
+                self.path.line_direction = q_prev
+                self.path.line_origin = r
+                z = waypoints.ned[:, self.ptr_current] - radius / np.tan(angle / 2) * q_prev
+                self.halfspace_r = z
+                self.halfspace_n = q_prev
+            if self.inHalfSpace(np.array([state.pn, state.pe, -state.h]).T):
+                if self.manager_state == 1:
+                    self.manager_state = 2
+                    self.path.type = 'orbit'
+                    self.path.flag_path_changed = True
+                    q_prev = (waypoints.ned[:, self.ptr_current] - waypoints.ned[:, self.ptr_previous]) / \
+                             np.linalg.norm(waypoints.ned[:, self.ptr_current] - waypoints.ned[:, self.ptr_previous])
+                    q = (waypoints.ned[:, self.ptr_next] - waypoints.ned[:, self.ptr_current]) / \
+                        np.linalg.norm(waypoints.ned[:, self.ptr_next] - waypoints.ned[:, self.ptr_current])
+                    angle = np.arccos(-q_prev.T @ q)
+                    c = waypoints.ned[:, self.ptr_current] - (radius / np.sin(angle / 2.)) * (q_prev - q) / np.linalg.norm(
+                        q_prev - q)
+                    self.path.orbit_center = c
+                    self.path.orbit_radius = radius
+                    if np.sign(q_prev.item(0) * q.item(1) - q_prev.item(1) * q.item(0)) >= 0:
+                        self.path.orbit_direction = 'CW'
+                    else:
+                        self.path.orbit_direction = 'CCW'
+                    z = waypoints.ned[:, self.ptr_current] + radius / np.tan(angle / 2) * q
+                    self.halfspace_r = z
+                    self.halfspace_n = q
+                else:
+                    self.increment_pointers()
+                    self.manager_state = 1
+                    self.path.type = 'line'
+                    self.path.flag_path_changed = True
+                    r = waypoints.ned[:, self.ptr_previous]
+                    q_prev = (waypoints.ned[:, self.ptr_current] - waypoints.ned[:, self.ptr_previous]) / \
+                             np.linalg.norm(waypoints.ned[:, self.ptr_current] - waypoints.ned[:, self.ptr_previous])
+                    q = (waypoints.ned[:, self.ptr_next] - waypoints.ned[:, self.ptr_current]) / \
+                        np.linalg.norm(waypoints.ned[:, self.ptr_next] - waypoints.ned[:, self.ptr_current])
+                    angle = np.arccos(-q_prev.T @ q)
+                    self.path.line_direction = q_prev
+                    self.path.line_origin = r
+                    z = waypoints.ned[:, self.ptr_current] - radius / np.tan(angle / 2) * q_prev
+                    self.halfspace_r = z
+                    self.halfspace_n = q_prev
+
+
+
     def dubins_manager(self, waypoints, radius, state):
         a = 2
 
-    def initialize_pointers(self):
-        a = 2
+    def initialize_pointers(self, waypoints):
+        self.num_waypoints = waypoints.num_waypoints
+        self.ptr_previous = 0
+        self.ptr_current = 1
+        self.ptr_next = 2
 
     def increment_pointers(self):
-        temp = self.ptr_previous
-        self.ptr_previous += 1
-        self.ptr_current += 1
+        self.ptr_previous = self.ptr_current
+        self.ptr_current = self.ptr_next
         self.ptr_next += 1
         if self.ptr_next == self.num_waypoints:
-            self.ptr_next = temp
+            self.ptr_next = 0
 
     def inHalfSpace(self, pos):
         if (pos-self.halfspace_r).T @ self.halfspace_n >= 0:
@@ -100,3 +140,14 @@ class path_manager:
         else:
             return False
 
+    def updateLineHalfSpace(self, waypoints):
+        r = waypoints.ned[:, self.ptr_previous]
+        q_prev = (waypoints.ned[:, self.ptr_current] - waypoints.ned[:, self.ptr_previous]) / np.linalg.norm(
+            waypoints.ned[:, self.ptr_current] - waypoints.ned[:, self.ptr_previous])
+        q = (waypoints.ned[:, self.ptr_next] - waypoints.ned[:, self.ptr_current]) / np.linalg.norm(
+            waypoints.ned[:, self.ptr_next] - waypoints.ned[:, self.ptr_current])
+        n = (q_prev + q) / np.linalg.norm(q_prev + q)
+        self.halfspace_r = waypoints.ned[:, self.ptr_current]
+        self.halfspace_n = n
+        self.path.line_origin = r
+        self.path.line_direction = q_prev

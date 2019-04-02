@@ -63,7 +63,7 @@ class path_viewer():
 
         # initialize the drawing the first time update() is called
         if not self.plot_initialized:
-            if path.flag=='line':
+            if path.type=='line':
                 straight_line_object = self.straight_line_plot(path)
                 self.window.addItem(straight_line_object)  # add straight line to plot
             else:  # path.flag=='orbit

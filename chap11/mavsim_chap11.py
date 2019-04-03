@@ -40,8 +40,8 @@ path_manage = path_manager()
 # waypoint definition
 from message_types.msg_waypoints import msg_waypoints
 waypoints = msg_waypoints()
-waypoints.type = 'straight_line'
-# waypoints.type = 'fillet'
+# waypoints.type = 'straight_line'
+waypoints.type = 'fillet'
 #waypoints.type = 'dubins'
 waypoints.num_waypoints = 4
 Va = PLAN.Va0

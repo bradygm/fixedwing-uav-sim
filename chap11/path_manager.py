@@ -88,9 +88,8 @@ class path_manager:
         else:
             if waypoints.flag_waypoints_changed:
                 self.initialize_pointers(waypoints)
-            self.dubins_path.update(waypoints.ned[:, self.ptr_previous], waypoints.course.item(self.ptr_previous),
-                                    waypoints.ned[:, self.ptr_current], waypoints.course.item(self.ptr_current), radius)
-            if self.manager_state == 1:
+                self.dubins_path.update(waypoints.ned[:, self.ptr_previous], waypoints.course.item(self.ptr_previous),
+                                        waypoints.ned[:, self.ptr_current], waypoints.course.item(self.ptr_current), radius)
                 self.path.type = 'orbit'
                 self.path.flag_path_changed = True
                 self.path.orbit_center = self.dubins_path.center_s
@@ -98,6 +97,7 @@ class path_manager:
                 self.orbitDirection(self.dubins_path.dir_s)
                 self.halfspace_r = self.dubins_path.r1
                 self.halfspace_n = -self.dubins_path.n1
+            if self.manager_state == 1:
                 if self.inHalfSpace(np.array([state.pn, state.pe, -state.h]).T):
                     self.manager_state = 2
                     self.halfspace_r = self.dubins_path.r1
@@ -105,23 +105,23 @@ class path_manager:
             elif self.manager_state == 2:
                 if self.inHalfSpace(np.array([state.pn, state.pe, -state.h]).T):
                     self.manager_state = 3
+                    self.path.type = 'line'
+                    self.path.flag_path_changed = True
+                    self.path.line_origin = self.dubins_path.r1
+                    self.path.line_direction = self.dubins_path.n1
+                    self.halfspace_r = self.dubins_path.r2
+                    self.halfspace_n = self.dubins_path.n1
             elif self.manager_state == 3:
-                self.path.type = 'line'
-                self.path.flag_path_changed = True
-                self.path.line_origin = self.dubins_path.r1
-                self.path.line_direction = self.dubins_path.n1
-                self.halfspace_r = self.dubins_path.r2
-                self.halfspace_n = self.dubins_path.n1
                 if self.inHalfSpace(np.array([state.pn, state.pe, -state.h]).T):
                     self.manager_state = 4
+                    self.path.type = 'orbit'
+                    self.path.flag_path_changed = True
+                    self.path.orbit_center = self.dubins_path.center_e
+                    self.path.orbit_radius = self.dubins_path.radius
+                    self.orbitDirection(self.dubins_path.dir_e)
+                    self.halfspace_r = self.dubins_path.r3
+                    self.halfspace_n = -self.dubins_path.n3
             elif self.manager_state == 4:
-                self.path.type = 'orbit'
-                self.path.flag_path_changed = True
-                self.path.orbit_center = self.dubins_path.center_e
-                self.path.orbit_radius = self.dubins_path.radius
-                self.orbitDirection(self.dubins_path.dir_e)
-                self.halfspace_r = self.dubins_path.r3
-                self.halfspace_n = -self.dubins_path.n3
                 if self.inHalfSpace(np.array([state.pn, state.pe, -state.h]).T):
                     self.manager_state = 5
                     self.halfspace_r = self.dubins_path.r3
@@ -134,6 +134,13 @@ class path_manager:
                                             waypoints.course.item(self.ptr_previous),
                                             waypoints.ned[:, self.ptr_current], waypoints.course.item(self.ptr_current),
                                             radius)
+                    self.path.type = 'orbit'
+                    self.path.flag_path_changed = True
+                    self.path.orbit_center = self.dubins_path.center_s
+                    self.path.orbit_radius = self.dubins_path.radius
+                    self.orbitDirection(self.dubins_path.dir_s)
+                    self.halfspace_r = self.dubins_path.r1
+                    self.halfspace_n = -self.dubins_path.n1
             else:
                 print("Error in manager state")
 

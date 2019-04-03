@@ -11,7 +11,6 @@ import numpy as np
 import pyqtgraph as pg
 import pyqtgraph.opengl as gl
 import pyqtgraph.Vector as Vector
-
 sys.path.append('../tools')
 from angleConversions import Euler2Rotation
 from chap11.dubins_parameters import dubins_parameters
@@ -273,9 +272,9 @@ class waypoint_viewer():
         initialize_points = True
         for j in range(0, waypoints.num_waypoints-1):
             self.dubins_path.update(
-                waypoints.ned[:, j:j+1],
+                waypoints.ned[:, j],
                 waypoints.course.item(j),
-                waypoints.ned[:, j+1:j+2],
+                waypoints.ned[:, j+1],
                 waypoints.course.item(j+1),
                 radius)
 

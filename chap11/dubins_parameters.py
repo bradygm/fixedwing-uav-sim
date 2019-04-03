@@ -34,22 +34,83 @@ class dubins_parameters:
         if ell < 2 * R:
             print('Error in Dubins Parameters: The distance between nodes must be larger than 2R.')
         else:
-
-            self.p_s = 0
-            # self.chi_s =
-            # self.p_e =
-            # self.chi_e =
-            # self.radius =
-            # self.length =
-            # self.center_s =
-            # self.dir_s =
-            # self.center_e =
-            # self.dir_e =
-            # self.r1 =
-            # self.n1 =
-            # self.r2 =
-            # self.r3 =
-            # self.n3 =
+            e1 = np.array([1., 0., 0.]).T
+            self.p_s = ps
+            self.chi_s = chis
+            self.p_e = pe
+            self.chi_e = chie
+            self.radius = R
+            c_rs = ps + R * rotz(np.pi / 2) @ np.array([np.cos(chis), np.sin(chis), 0.]).T
+            c_ls = ps + R * rotz(-np.pi / 2) @ np.array([np.cos(chis), np.sin(chis), 0.]).T
+            c_re = pe + R * rotz(np.pi / 2) @ np.array([np.cos(chie), np.sin(chie), 0.]).T
+            c_le = pe + R * rotz(-np.pi / 2) @ np.array([np.cos(chie), np.sin(chie), 0.]).T
+            theta = np.arctan2(c_re.item(1)-c_rs.item(1), c_re.item(0)-c_rs.item(0))
+            L1 = np.linalg.norm(c_rs - c_re) + \
+                 R*mod(2*np.pi + mod(theta - np.pi/2) - mod(chis - np.pi/2)) + \
+                 R*mod(2*np.pi + mod(chie - np.pi/2) - mod(theta - np.pi/2))
+            ell = np.linalg.norm(c_le - c_rs)
+            theta = np.arctan2(c_le.item(1) - c_rs.item(1), c_le.item(0) - c_rs.item(0))
+            theta2 = theta - np.pi / 2 + np.arcsin(2 * R / ell)
+            L2 = np.sqrt(ell**2 - 4.*R**2) + \
+                 R*mod(2*np.pi + mod(theta2) - mod(chis - np.pi/2)) + \
+                 R*mod(2*np.pi + mod(theta2 + np.pi) - mod(chie + np.pi/2))
+            ell = np.linalg.norm(c_re - c_ls)
+            theta = np.arctan2(c_re.item(1) - c_ls.item(1), c_re.item(0) - c_ls.item(0))
+            theta2 = np.arccos(2 * R / ell)
+            L3 = np.sqrt(ell**2 - 4*R**2) + \
+                 R*mod(2*np.pi + mod(chis + np.pi/2) - mod(theta + theta2)) + \
+                 R*mod(2*np.pi + mod(chie - np.pi/2) - mod(theta + theta2 - np.pi))
+            theta = np.arctan2(c_le.item(1) - c_ls.item(1), c_le.item(0) - c_ls.item(0))
+            L4 = np.linalg.norm(c_ls - c_le) + \
+                 R*mod(2*np.pi + mod(chis + np.pi/2) - mod(theta + np.pi/2)) + \
+                 R*mod(2*np.pi + mod(theta + np.pi/2) - mod(chie + np.pi/2))
+            minIndex = np.argmin([L1, L2, L3, L4])
+            if minIndex == 0:
+                self.length = L1
+                self.center_s = c_rs
+                self.dir_s = 1
+                self.center_e = c_re
+                self.dir_e = 1
+                self.n1 = (c_re - c_rs)/np.linalg.norm(c_re - c_rs)
+                self.r1 = c_rs + R*rotz(-np.pi/2)@self.n1
+                self.r2 = c_re + R*rotz(-np.pi/2)@self.n1
+            elif minIndex == 1:
+                self.length = L2
+                self.center_s = c_rs
+                self.dir_s = 1
+                self.center_e = c_le
+                self.dir_e = -1
+                ell = np.linalg.norm(c_le - c_rs)
+                theta = np.arctan2(c_le.item(1) - c_rs.item(1), c_le.item(0) - c_rs.item(0))
+                theta2 = theta - np.pi / 2 + np.arcsin(2 * R / ell)
+                self.n1 = rotz(theta2+np.pi/2)@e1
+                self.r1 = c_rs + R*rotz(theta2)@e1
+                self.r2 = c_le + R*rotz(theta2 + np.pi)@e1
+            elif minIndex == 2:
+                self.length = L3
+                self.center_s = c_ls
+                self.dir_s = -1
+                self.center_e = c_re
+                self.dir_e = 1
+                ell = np.linalg.norm(c_re - c_ls)
+                theta = np.arctan2(c_re.item(1) - c_ls.item(1), c_re.item(0) - c_ls.item(0))
+                theta2 = np.arccos(2 * R / ell)
+                self.n1 = rotz(theta + theta2 -np.pi/2)@e1
+                self.r1 = c_ls + R*rotz(theta + theta2)@e1
+                self.r2 = c_re + R*rotz(theta + theta2 - np.pi)@e1
+            elif minIndex == 3:
+                self.length = L4
+                self.center_s = c_ls
+                self.dir_s = -1
+                self.center_e = c_le
+                self.dir_e = -1
+                self.n1 = (c_le - c_ls)/np.linalg.norm(c_le - c_ls)
+                self.r1 = c_ls + R*rotz(np.pi/2)@self.n1
+                self.r2 = c_le + R*rotz(np.pi/2)@self.n1
+            else:
+                print("Error in finding minimum length")
+            self.r3 = pe
+            self.n3 = rotz(chie)@e1
 
 
 def rotz(theta):

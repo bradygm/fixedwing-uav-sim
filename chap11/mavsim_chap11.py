@@ -41,8 +41,8 @@ path_manage = path_manager()
 from message_types.msg_waypoints import msg_waypoints
 waypoints = msg_waypoints()
 # waypoints.type = 'straight_line'
-waypoints.type = 'fillet'
-#waypoints.type = 'dubins'
+# waypoints.type = 'fillet'
+waypoints.type = 'dubins'
 waypoints.num_waypoints = 4
 Va = PLAN.Va0
 waypoints.ned[:, 0:waypoints.num_waypoints] \
@@ -57,14 +57,6 @@ waypoints.course[:, 0:waypoints.num_waypoints] \
                  np.radians(45),
                  np.radians(45),
                  np.radians(-135)]])
-# waypoints.ned[:, 0:waypoints.num_waypoints] \
-#     = np.array([[0, 0, -100],
-#                 [1000, 0, -100]]).T
-# waypoints.airspeed[:, 0:waypoints.num_waypoints] \
-#     = np.array([[Va, Va]])
-# waypoints.course[:, 0:waypoints.num_waypoints] \
-#     = np.array([[np.radians(0),
-#                  np.radians(45)]])
 
 # initialize the simulation time
 sim_time = SIM.start_time

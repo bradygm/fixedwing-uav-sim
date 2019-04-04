@@ -1,8 +1,8 @@
 """
 mavsim_python
-    - Chapter 11 assignment for Beard & McLain, PUP, 2012
+    - Chapter 12 assignment for Beard & McLain, PUP, 2012
     - Last Update:
-        3/26/2019 - RWB
+        4/3/2019 - BGM
 """
 import sys
 sys.path.append('..')
@@ -17,15 +17,16 @@ from chap7.mav_dynamics import mav_dynamics
 from chap8.observer import observer
 from chap10.path_follower import path_follower
 from chap11.path_manager import path_manager
-from chap11.waypoint_viewer import waypoint_viewer
+from chap12.world_viewer import world_viewer
+from chap12.path_planner import path_planner
 
 # initialize the visualization
 VIDEO = False  # True==write video, False==don't write video
-waypoint_view = waypoint_viewer()  # initialize the viewer
+world_view = world_viewer()  # initialize the viewer
 data_view = data_viewer()  # initialize view of data plots
 if VIDEO == True:
     from chap2.video_writer import video_writer
-    video = video_writer(video_name="chap11_video.avi",
+    video = video_writer(video_name="chap12_video.avi",
                          bounding_box=(0, 0, 1000, 1000),
                          output_rate=SIM.ts_video)
 
@@ -36,27 +37,11 @@ ctrl = autopilot(SIM.ts_simulation)
 obsv = observer(SIM.ts_simulation)
 path_follow = path_follower()
 path_manage = path_manager()
+path_plan = path_planner()
 
-# waypoint definition
-from message_types.msg_waypoints import msg_waypoints
-waypoints = msg_waypoints()
-# waypoints.type = 'straight_line'
-waypoints.type = 'fillet'
-# waypoints.type = 'dubins'
-waypoints.num_waypoints = 4
-Va = PLAN.Va0
-waypoints.ned[:, 0:waypoints.num_waypoints] \
-    = np.array([[0, 0, -100],
-                [1000, 0, -100],
-                [0, 1000, -100],
-                [1000, 1000, -100]]).T
-waypoints.airspeed[:, 0:waypoints.num_waypoints] \
-    = np.array([[Va, Va, Va, Va]])
-waypoints.course[:, 0:waypoints.num_waypoints] \
-    = np.array([[np.radians(0),
-                 np.radians(45),
-                 np.radians(45),
-                 np.radians(-135)]])
+from message_types.msg_map import msg_map
+map = msg_map(PLAN)
+
 
 # initialize the simulation time
 sim_time = SIM.start_time
@@ -67,6 +52,10 @@ while sim_time < SIM.end_time:
     #-------observer-------------
     measurements = mav.update_sensors()  # get sensor measurements
     estimated_state = obsv.update(measurements)  # estimate states from measurements
+
+    # -------path planner - ----
+    if path_manage.flag_need_new_waypoints == 1:
+        waypoints = path_plan.update(map, estimated_state)
 
     #-------path manager-------------
     path = path_manage.update(waypoints, PLAN.R_min, estimated_state)
@@ -82,7 +71,7 @@ while sim_time < SIM.end_time:
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------
-    waypoint_view.update(waypoints, path, mav.msg_true_state)  # plot path and MAV
+    world_view.update(map, waypoints, path, mav.msg_true_state)  # plot path and MAV
     data_view.update(mav.msg_true_state, # true states
                      estimated_state, # estimated states
                      commanded_state, # commanded states

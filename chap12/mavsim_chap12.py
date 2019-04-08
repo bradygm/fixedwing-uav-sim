@@ -55,10 +55,11 @@ while sim_time < SIM.end_time:
 
     # -------path planner - ----
     if path_manage.flag_need_new_waypoints == 1:
-        waypoints = path_plan.update(map, estimated_state)
+        path_plan.update(map, estimated_state)
+        path_manage.flag_need_new_waypoints = 0
 
     #-------path manager-------------
-    path = path_manage.update(waypoints, PLAN.R_min, estimated_state)
+    path = path_manage.update(path_plan.waypoints, PLAN.R_min, estimated_state)
 
     #-------path follower-------------
     autopilot_commands = path_follow.update(path, estimated_state)
@@ -71,7 +72,7 @@ while sim_time < SIM.end_time:
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
 
     #-------update viewer-------------
-    world_view.update(map, waypoints, path, mav.msg_true_state)  # plot path and MAV
+    world_view.update(map, path_plan.waypoints, path, mav.msg_true_state)  # plot path and MAV
     data_view.update(mav.msg_true_state, # true states
                      estimated_state, # estimated states
                      commanded_state, # commanded states

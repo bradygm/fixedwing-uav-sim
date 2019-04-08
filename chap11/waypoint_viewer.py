@@ -202,7 +202,8 @@ class waypoint_viewer():
         elif path.type == 'orbit':
             points = self.orbit_points(path)
         if not self.plot_initialized:
-            path_color = np.tile(red, (points.shape[0], 1))
+            # path_color = np.tile(red, (points.shape[0], 1))
+            path_color = pg.glColor('r')
             self.path = gl.GLLinePlotItem(pos=points,
                                           color=path_color,
                                           width=2,
@@ -253,7 +254,8 @@ class waypoint_viewer():
         elif waypoints.type=='dubins':
             points = self.dubins_points(waypoints, radius, 0.1)
         if not self.plot_initialized:
-            waypoint_color = np.tile(blue, (points.shape[0], 1))
+            # waypoint_color = np.tile(blue, (points.shape[0], 1))
+            waypoint_color = pg.glColor('b')
             self.waypoints = gl.GLLinePlotItem(pos=points,
                                                color=waypoint_color,
                                                width=2,

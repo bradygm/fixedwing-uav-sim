@@ -83,8 +83,8 @@ class path_manager:
 
 
     def dubins_manager(self, waypoints, radius, state):
-        if waypoints.num_waypoints < 3:
-            print("Must have at least 3 waypoints")
+        if waypoints.num_waypoints < 2:
+            print("Must have at least 2 waypoints")
         else:
             if waypoints.flag_waypoints_changed:
                 self.initialize_pointers(waypoints)

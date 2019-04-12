@@ -60,6 +60,8 @@ class path_follower:
             lambda_direction = -1
             self.autopilot_commands.phi_feedforward = -atan(state.Va ** 2 / (self.gravity * path.orbit_radius))
         crossTrackError = (d - path.orbit_radius)/path.orbit_radius
+        # if abs(crossTrackError) > 1:
+        #     self.autopilot_commands.phi_feedforward = self.autopilot_commands.phi_feedforward*(1-np.exp())
         chi_command = loopyThang_wrap + lambda_direction*(np.pi/2. + atan(self.k_orbit*(crossTrackError)))
 
         #Solve for feedforward term

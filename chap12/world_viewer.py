@@ -27,6 +27,8 @@ class world_viewer():
         grid.scale(self.scale/20, self.scale/20, self.scale/20) # set the size of the grid (distance between each line)
         self.window.addItem(grid) # add grid to viewer
         self.window.setCameraPosition(distance=self.scale, elevation=50, azimuth=-90)
+        view_location = Vector(2000, 2000, 0)  # defined in ENU coordinates
+        self.window.opts['center'] = view_location
         self.window.setBackgroundColor('k')  # set background color to black
         self.window.show()  # display configured window
         self.window.raise_() # bring window to the front

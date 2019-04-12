@@ -12,13 +12,15 @@ size_waypoint_array = 100
 Va0 = MAV.u0
 
 # max possible roll angle
-phi_max = np.radians(20)
+# phi_max = np.radians(20)
+phi_max = np.radians(30)
+
 
 # minimum turn radius
 R_min = Va0**2 / MAV.gravity / np.tan(phi_max)
 
 # create random city map
-city_width      = 2000  # the city is of size (width)x(width)
+city_width      = 4000  # the city is of size (width)x(width)
 building_height = 300   # maximum height of buildings
 #building_height = 1;   # maximum height of buildings (for camera)
 num_blocks      = 5    # number of blocks in city

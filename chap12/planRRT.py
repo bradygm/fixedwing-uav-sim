@@ -8,7 +8,7 @@ class planRRT():
         self.segmentLength = 300 # standard length of path segments
         self.pointsAlongPathSpacing = 5.
         self.clearance = 20
-        np.random.seed(1112)  # For Debugging
+        # np.random.seed(1112)  # For Debugging
 
     def planPath(self, wpp_start, wpp_end, map):
 
@@ -26,9 +26,10 @@ class planRRT():
         # check to see if start_node connects directly to end_node
         if ((np.linalg.norm(start_node[0:3] - end_node[0:3]) < self.segmentLength ) and not self.collision(start_node, end_node, map)):
             waypointsPath = msg_waypoints()
-            waypointsPath.ned[:,waypointsPath.num_waypoints] = end_node[0:3]
-            waypointsPath.airspeed[waypointsPath.num_waypoints] = end_node[3]
-            waypointsPath.num_waypoints = 1
+            waypointsPath.ned[:,0:2] = np.append([start_node[0:3]], [end_node[0:3]],axis=0).T
+            # waypointsPath.airspeed[0:2] = np.append(start_node[3],end_node[3],axis=0)
+            # np.append(tree, newNode, axis=0)
+            waypointsPath.num_waypoints = 2
             return waypointsPath
         else:
             numPaths = 0
@@ -149,8 +150,8 @@ class planRRT():
             waypoints.ned[:,waypoints.num_waypoints] = tree[parentNode, 0:3]
             waypoints.num_waypoints += 1
             parentNode = int(tree[parentNode, 4])
-        # waypoints.ned[:,waypoints.num_waypoints] = tree[parentNode, 0:3]
-        # waypoints.num_waypoints += 1  # This adds the starting point
+        waypoints.ned[:,waypoints.num_waypoints] = tree[parentNode, 0:3]
+        waypoints.num_waypoints += 1  # This adds the starting point
         waypoints2 = msg_waypoints()
         for i in range(0, waypoints.num_waypoints):
             waypoints2.ned[:,i] = waypoints.ned[:,waypoints.num_waypoints-i-1]

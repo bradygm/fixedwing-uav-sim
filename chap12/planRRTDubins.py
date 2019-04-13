@@ -9,7 +9,7 @@ class planRRTDubins():
         self.segmentLength = 300 # standard length of path segments
         self.pointsAlongPathSpacing = .1
         self.clearance = 20
-        np.random.seed(1111)  # For Debugging
+        # np.random.seed(1111)  # For Debugging
 
     def planPath(self, wpp_start, wpp_end, R_min, map):
 

@@ -2,12 +2,12 @@ import numpy as np
 from message_types.msg_waypoints import msg_waypoints
 
 
-
+#This could be much better if it picked the best path after all were smoothed.
 class planRRT():
     def __init__(self, map):
         self.segmentLength = 300 # standard length of path segments
         self.pointsAlongPathSpacing = 5.
-        self.clearance = 20
+        self.clearance = 30
         # np.random.seed(1112)  # For Debugging
 
     def planPath(self, wpp_start, wpp_end, map):

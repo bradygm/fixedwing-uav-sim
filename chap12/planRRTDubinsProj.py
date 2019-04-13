@@ -7,15 +7,15 @@ Things that are different:
 Finds multiple paths and picks the best. 
 Waypoints are passed through in straight lines
 Waypoints can be at multiple altitudes
-
+Pick the best path after smoothing?
 
 """
-class planRRTDubins():
+class planRRTDubinsProj():
     def __init__(self, map):
         self.segmentLength = 300 # standard length of path segments
         self.pointsAlongPathSpacing = .1
         self.clearance = 20
-        # np.random.seed(1111)  # For Debugging
+        np.random.seed(1111)  # For Debugging
 
     def planPath(self, wpp_start, wpp_end, R_min, map):
 
@@ -23,36 +23,45 @@ class planRRTDubins():
 
         # desired down position is down position of end node
         pd = wpp_end.item(2)
+        numSolvedPaths = 0
+        solvedPaths = []
+        solvedPathsWeights = []
+        while numSolvedPaths < 3:
+            # specify start and end nodes from wpp_start and wpp_end
+            # format: N, E, D, chi, cost, parentIndex, connectsToGoalFlag,
+            start_node = np.array([wpp_start.item(0), wpp_start.item(1), pd, self.mod(wpp_start.item(3)), 0, -1, 0])
+            end_node = np.array([wpp_end.item(0), wpp_end.item(1), pd, self.mod(wpp_end.item(3)), 0, 0, 0])
 
-        # specify start and end nodes from wpp_start and wpp_end
-        # format: N, E, D, chi, cost, parentIndex, connectsToGoalFlag,
-        start_node = np.array([wpp_start.item(0), wpp_start.item(1), pd, self.mod(wpp_start.item(3)), 0, -1, 0])
-        end_node = np.array([wpp_end.item(0), wpp_end.item(1), pd, self.mod(wpp_end.item(3)), 0, 0, 0])
+            # establish tree starting with the start node
+            tree = np.array([start_node])
 
-        # establish tree starting with the start node
-        tree = np.array([start_node])
-
-        # check to see if start_node connects directly to end_node
-        if ((np.linalg.norm(start_node[0:3] - end_node[0:3]) < self.segmentLength)
-                and np.linalg.norm(start_node[0:3] - end_node[0:3])>=3.*R_min
-                and not self.collision(start_node, end_node, map, R_min)):
-            waypointsPath = msg_waypoints()
-            waypointsPath.ned[:,waypointsPath.num_waypoints] = end_node[0:3]
-            waypointsPath.airspeed[waypointsPath.num_waypoints] = end_node[4]
-            waypointsPath.course[waypointsPath.num_waypoints] = end_node[3]
-            waypointsPath.num_waypoints = 1
-            return waypointsPath
-        else:
-            numPaths = 0
-            while numPaths < 1: #?? Change to do full trees multiple times. Then pick best path. Need to calculate dubin cost though to compare.
-                tree, flag = self.extendTree(tree, end_node, R_min, map, pd)
-                numPaths = numPaths + flag
+            # check to see if start_node connects directly to end_node
+            collision, weight = self.collision(start_node, end_node, map, R_min)
+            if ((np.linalg.norm(start_node[0:3] - end_node[0:3]) < self.segmentLength)
+                    and np.linalg.norm(start_node[0:3] - end_node[0:3])>=3.*R_min
+                    and not collision):
+                waypointsPath = msg_waypoints()
+                waypointsPath.ned[:,waypointsPath.num_waypoints] = end_node[0:3]
+                waypointsPath.airspeed[waypointsPath.num_waypoints] = end_node[4]
+                waypointsPath.course[waypointsPath.num_waypoints] = end_node[3]
+                waypointsPath.num_waypoints = 1
+                return waypointsPath
+            else:
+                numPaths = 0
+                while numPaths < 1: #?? Change to do full trees multiple times. Then pick best path. Need to calculate dubin cost though to compare.
+                    tree, flag = self.extendTree(tree, end_node, R_min, map, pd)
+                    numPaths = numPaths + flag
 
 
-        # find path with minimum cost to end_node
-        minPath = self.findMinimumPath(tree, end_node)
-        return self.smoothPath(minPath, map, R_min)
-        # return self.findMinimumPath(tree, end_node)
+            # find path with minimum cost to end_node
+            minPath = self.findMinimumPath(tree, end_node)
+            smoothPath, newWeight = self.smoothPath(minPath, map, R_min)
+            solvedPaths.append(smoothPath)
+            solvedPathsWeights.append(newWeight)
+            numSolvedPaths += 1
+        minIndex = solvedPathsWeights.index(min(solvedPathsWeights))
+        return solvedPaths[minIndex]
+
 
     def randomPoint(self, map):
         return np.random.uniform(low=0, high=map.city_width), np.random.uniform(low=0, high=map.city_width)
@@ -60,8 +69,8 @@ class planRRTDubins():
     def collision(self, startNode, endNode, map, radius):
         dubinPath = dubins_parameters()
         dubinPath.update(startNode[0:3], startNode.item(3), endNode[0:3], endNode.item(3), radius)
-        if np.isnan(dubinPath.r1.item(1)):
-            return True
+        if np.isnan(dubinPath.r1.item(1)) or dubinPath.r1.item(1)==np.inf:
+            return True, 0
         N, E, D = self.pointsAlongDubinsPath(dubinPath, self.pointsAlongPathSpacing)
         # spacing = map.city_width / map.num_city_blocks
         # N += (spacing * .5)
@@ -80,8 +89,8 @@ class planRRTDubins():
                     downSub = D[withinNorth]
                     if np.any(withinEast, axis=0):
                         if np.any(-downSub[withinEast] < (map.building_height[j,i]+self.clearance)):
-                            return True
-        return False
+                            return True, dubinPath.length
+        return False, dubinPath.length
 
 
 
@@ -126,10 +135,10 @@ class planRRTDubins():
             tmp = np.array([northP, eastP, downP]) - np.array([tree[minIndex,0], tree[minIndex,1], tree[minIndex,2]])
             newPoint = np.array([tree[minIndex, 0], tree[minIndex, 1], tree[minIndex, 2]]) + L * (tmp / np.linalg.norm(tmp))
             newNode = np.array([[newPoint.item(0), newPoint.item(1), newPoint.item(2), chi, tree[minIndex, 3] + L, minIndex, 0.]])
-
+            collision, weight = self.collision(tree[minIndex, :], newNode[0, :], map, R_min)
             # Check for Collision
             if np.linalg.norm(tree[minIndex, 0:3] - newNode[0, 0:3]) > 3.*R_min and \
-                not self.collision(tree[minIndex, :], newNode[0, :], map, R_min):
+                not collision:
                 successFlag = True
                 tree = np.append(tree, newNode,axis=0)  # Append new node to the full tree
                 # points = self.ax.plot([tree[minIndex, 0], newNode.item(0)], [tree[minIndex, 1], newNode.item(1)],
@@ -140,8 +149,9 @@ class planRRTDubins():
                 if np.size(tree, 0) == 35:
                     a = 2
                 # chi = np.arctan2((endN.e - newNode.item(1)), (endN.n - newNode.item(0)))
+                collision, weight = self.collision(newNode[0,:], endN, map, R_min)
                 if np.linalg.norm(newNode[0, 0:3] - endN[0:3]) >= 3.*R_min \
-                        and dist < 1.5*self.segmentLength and not self.collision(newNode[0,:], endN, map, R_min):
+                        and dist < 1.5*self.segmentLength and not collision:
                     tree[np.size(tree, 0)-1, 6] = 1
                     return tree, 1  # Return the extended tree with the flag of a successful path to ending node
                 else:
@@ -188,21 +198,27 @@ class planRRTDubins():
         waypoints.ned[:, waypoints.num_waypoints] = path.ned[:, waypoints.num_waypoints]
         waypoints.course[:, waypoints.num_waypoints] = path.course[:,waypoints.num_waypoints]
         waypoints.num_waypoints += 1
+        weight = 0
         index = 1
         while index < path.num_waypoints - 1:
-            # chi = np.arctan2((path.ned[1,index + 1] - waypoints.ned[1,waypoints.num_waypoints-1]),
-            #                  (path.ned[0,index + 1] - waypoints.ned[0,waypoints.num_waypoints-1]))
-            if self.collision(np.concatenate((waypoints.ned[:,waypoints.num_waypoints-1],waypoints.course[:,waypoints.num_waypoints-1]),axis=0), np.concatenate((path.ned[:,index + 1],path.course[:,index + 1]),axis=0), map, R_min) or \
+            collision, pathWeight = self.collision(np.concatenate((waypoints.ned[:,waypoints.num_waypoints-1],waypoints.course[:,waypoints.num_waypoints-1]),axis=0), np.concatenate((path.ned[:,index + 1],path.course[:,index + 1]),axis=0), map, R_min)
+            if collision or \
                 np.linalg.norm(waypoints.ned[:,waypoints.num_waypoints-1] - path.ned[:,index + 1]) <= 2.*R_min:
                 # self.flyablePath(smoothedPath[len(smoothedPath) - 1], path[index + 1], prev_chi, chi):
                 waypoints.ned[:,waypoints.num_waypoints] = path.ned[:, index]
                 waypoints.course[:,waypoints.num_waypoints] = path.course[:,index]
                 waypoints.airspeed[:,waypoints.num_waypoints] = path.airspeed[:,index]
+                weight += pathWeight
                 waypoints.num_waypoints += 1
             index += 1
+        collision, pathWeight = self.collision(np.concatenate(
+            (waypoints.ned[:, waypoints.num_waypoints - 1], waypoints.course[:, waypoints.num_waypoints - 1]), axis=0),
+                                               np.concatenate((path.ned[:, index], path.course[:, index]),
+                                                              axis=0), map, R_min)
         waypoints.ned[:,waypoints.num_waypoints] = path.ned[:,path.num_waypoints-1]
         waypoints.course[:, waypoints.num_waypoints] = path.course[:, path.num_waypoints - 1]
         waypoints.airspeed[:, waypoints.num_waypoints] = path.airspeed[:, path.num_waypoints - 1]
+        weight += pathWeight
         waypoints.num_waypoints += 1
         # smoothedPath.append(path[len(path) - 1])
         # for i in range(0, len(smoothedPath) - 1):  # Could add other things to this cost function if wanted
@@ -210,7 +226,7 @@ class planRRTDubins():
         #         (smoothedPath[i].n - smoothedPath[i + 1].n) ** 2 + (smoothedPath[i].e - smoothedPath[i + 1].e) ** 2 + \
         #         (smoothedPath[i].d - smoothedPath[i + 1].d) ** 2)
 
-        return waypoints
+        return waypoints, weight
 
     def rotz(self, theta):
         R = np.array([[np.cos(theta), -np.sin(theta), 0],

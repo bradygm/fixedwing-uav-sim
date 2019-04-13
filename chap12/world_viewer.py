@@ -253,20 +253,146 @@ class world_viewer():
     def drawWaypoints(self, waypoints, radius):
         blue = np.array([[0., 0., 1., 1.]])
         blue = np.array([[30, 144, 255, 255]])/255.
-        if waypoints.type=='straight_line' or waypoints.type=='fillet':
-            points = self.straight_waypoint_points(waypoints)
-        elif waypoints.type=='dubins':
-            points = self.dubins_points(waypoints, radius, 0.1)
-        if not self.plot_initialized:
-            waypoint_color = np.tile(blue, (points.shape[0], 1))
-            self.waypoints = gl.GLLinePlotItem(pos=points,
-                                               color=waypoint_color,
-                                               width=2,
-                                               antialias=True,
-                                               mode='line_strip')
-            self.window.addItem(self.waypoints)
+        if isinstance(waypoints.type, str):
+            if waypoints.type=='straight_line' or waypoints.type=='fillet':
+                points = self.straight_waypoint_points(waypoints)
+            elif waypoints.type=='dubins':
+                points = self.dubins_points(waypoints, radius, 0.1)
+            if not self.plot_initialized:
+                waypoint_color = np.tile(blue, (points.shape[0], 1))
+                self.waypoints = gl.GLLinePlotItem(pos=points,
+                                                   color=waypoint_color,
+                                                   width=2,
+                                                   antialias=True,
+                                                   mode='line_strip')
+                self.window.addItem(self.waypoints)
+            else:
+                self.waypoints.setData(pos=points)
         else:
-            self.waypoints.setData(pos=points)
+            points = self.mix_points(waypoints, radius, 0.1)
+            # if currentType == 'straight_line' or currentType == 'fillet':
+            #     points = self.straight_waypoint_points(waypoints)
+            # elif currentType == 'dubins':
+            #     points = self.dubins_points(waypoints, radius, 0.1)
+            if not self.plot_initialized:
+                waypoint_color = np.tile(blue, (points.shape[0], 1))
+                self.waypoints = gl.GLLinePlotItem(pos=points,
+                                                   color=waypoint_color,
+                                                   width=2,
+                                                   antialias=True,
+                                                   mode='line_strip')
+                self.window.addItem(self.waypoints)
+            else:
+                self.waypoints.setData(pos=points)
+
+    def mix_points(self, waypoints, radius, Del):
+        # points = np.array([[]])
+        points = np.array([], dtype=np.float32).reshape(0, 3)
+        for i in range(0, waypoints.num_waypoints - 1):
+            currentType = waypoints.type[i+1]
+            if currentType == 'straight_line' or currentType == 'fillet':
+                R = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])
+                pointsTemp = waypoints.ned[:,i:i+2].T @ R.T
+                points = np.concatenate((points, pointsTemp), axis=0)
+            elif currentType == 'dubins':
+                initialize_points = True
+                self.dubins_path.update(
+                    waypoints.ned[:, i],
+                    waypoints.course.item(i),
+                    waypoints.ned[:, i + 1],
+                    waypoints.course.item(i + 1),
+                    radius)
+
+                # points along start circle
+                th1 = np.arctan2(self.dubins_path.p_s.item(1) - self.dubins_path.center_s.item(1),
+                                 self.dubins_path.p_s.item(0) - self.dubins_path.center_s.item(0))
+                th1 = mod(th1)
+                th2 = np.arctan2(self.dubins_path.r1.item(1) - self.dubins_path.center_s.item(1),
+                                 self.dubins_path.r1.item(0) - self.dubins_path.center_s.item(0))
+                th2 = mod(th2)
+                th = th1
+                theta_list = [th]
+                if self.dubins_path.dir_s > 0:
+                    if th1 >= th2:
+                        while th < th2 + 2 * np.pi:
+                            th += Del
+                            theta_list.append(th)
+                    else:
+                        while th < th2:
+                            th += Del
+                            theta_list.append(th)
+                else:
+                    if th1 <= th2:
+                        while th > th2 - 2 * np.pi:
+                            th -= Del
+                            theta_list.append(th)
+                    else:
+                        while th > th2:
+                            th -= Del
+                            theta_list.append(th)
+
+                if initialize_points:
+                    pointsTemp = np.array(
+                        [[self.dubins_path.center_s.item(0) + self.dubins_path.radius * np.cos(theta_list[0]),
+                          self.dubins_path.center_s.item(1) + self.dubins_path.radius * np.sin(theta_list[0]),
+                          self.dubins_path.center_s.item(2)]])
+                    initialize_points = False
+                for angle in theta_list:
+                    new_point = np.array(
+                        [[self.dubins_path.center_s.item(0) + self.dubins_path.radius * np.cos(angle),
+                          self.dubins_path.center_s.item(1) + self.dubins_path.radius * np.sin(angle),
+                          self.dubins_path.center_s.item(2)]])
+                    pointsTemp = np.concatenate((pointsTemp, new_point), axis=0)
+
+                # points along straight line
+                sig = 0
+                while sig <= 1:
+                    new_point = np.array(
+                        [[(1 - sig) * self.dubins_path.r1.item(0) + sig * self.dubins_path.r2.item(0),
+                          (1 - sig) * self.dubins_path.r1.item(1) + sig * self.dubins_path.r2.item(1),
+                          (1 - sig) * self.dubins_path.r1.item(2) + sig * self.dubins_path.r2.item(2)]])
+                    pointsTemp = np.concatenate((pointsTemp, new_point), axis=0)
+                    sig += Del
+
+                # points along end circle
+                th2 = np.arctan2(self.dubins_path.p_e.item(1) - self.dubins_path.center_e.item(1),
+                                 self.dubins_path.p_e.item(0) - self.dubins_path.center_e.item(0))
+                th2 = mod(th2)
+                th1 = np.arctan2(self.dubins_path.r2.item(1) - self.dubins_path.center_e.item(1),
+                                 self.dubins_path.r2.item(0) - self.dubins_path.center_e.item(0))
+                th1 = mod(th1)
+                th = th1
+                theta_list = [th]
+                if self.dubins_path.dir_e > 0:
+                    if th1 >= th2:
+                        while th < th2 + 2 * np.pi:
+                            th += Del
+                            theta_list.append(th)
+                    else:
+                        while th < th2:
+                            th += Del
+                            theta_list.append(th)
+                else:
+                    if th1 <= th2:
+                        while th > th2 - 2 * np.pi:
+                            th -= Del
+                            theta_list.append(th)
+                    else:
+                        while th > th2:
+                            th -= Del
+                            theta_list.append(th)
+                for angle in theta_list:
+                    new_point = np.array(
+                        [[self.dubins_path.center_e.item(0) + self.dubins_path.radius * np.cos(angle),
+                          self.dubins_path.center_e.item(1) + self.dubins_path.radius * np.sin(angle),
+                          self.dubins_path.center_e.item(2)]])
+                    pointsTemp = np.concatenate((pointsTemp, new_point), axis=0)
+
+                R = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])
+                pointsTemp = pointsTemp @ R.T
+                points = np.concatenate((points,pointsTemp), axis=0)
+        return points
+
 
     def straight_waypoint_points(self, waypoints):
         R = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])

@@ -25,14 +25,25 @@ class path_manager:
     def update(self, waypoints, radius, state):
         if self.path.flag_path_changed == True:
             self.path.flag_path_changed = False
-        if waypoints.type == 'straight_line':
-            self.line_manager(waypoints, state)
-        elif waypoints.type == 'fillet':
-            self.fillet_manager(waypoints, radius, state)
-        elif waypoints.type == 'dubins':
-            self.dubins_manager(waypoints, radius, state)
+        if isinstance(waypoints.type, str):
+            if waypoints.type == 'straight_line':
+                self.line_manager(waypoints, state)
+            elif waypoints.type == 'fillet':
+                self.fillet_manager(waypoints, radius, state)
+            elif waypoints.type == 'dubins':
+                self.dubins_manager(waypoints, radius, state)
+            else:
+                print('Error in Path Manager: Undefined waypoint type.')
         else:
-            print('Error in Path Manager: Undefined waypoint type.')
+            currentType = waypoints.type[self.ptr_current]
+            if currentType == 'straight_line':
+                self.line_manager(waypoints, state)
+            elif currentType == 'fillet':
+                self.fillet_manager(waypoints, radius, state)
+            elif currentType == 'dubins':
+                self.dubins_manager(waypoints, radius, state)
+            else:
+                print('Error in Path Manager: Undefined waypoint type.')
         if waypoints.flag_waypoints_changed == True:
             waypoints.flag_waypoints_changed = False
         return self.path

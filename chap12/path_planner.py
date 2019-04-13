@@ -164,7 +164,9 @@ class path_planner:
                     self.waypoints.airspeed[:, numOld] = wpp_end.item(4) * np.ones((1, numNew))
                 self.waypoints.num_waypoints = numNew + numOld
         elif planner_flag == 5:
-            self.waypoints.type = 'dubins'
+            # self.waypoints.type = ['dubins','dubins','dubins','dubins']
+            self.waypoints.type = ['straight_line','dubins','dubins','straight_line','straight_line']
+            # self.waypoints.type = 'dubins'
             self.waypoints.num_waypoints = 0
             Va = 25
             numberWaypoints = 4
@@ -177,12 +179,19 @@ class path_planner:
                                              np.radians(45),
                                              np.radians(45),
                                              np.radians(-135)]])
-            # numberWaypoints = 2
-            # primaryWaypoints = np.array([[0., 0., -100.],
-            #                              [1000., 0., -100.]]).T
-            # primaryWaypointsAirspeed = np.array([[Va, Va]])
-            # primaryCourseAngles = np.array([[np.radians(0),
-            #                                  np.radians(45)]])
+            # Make new points before the real waypoints. In line with chi from previous waypoint pointing.
+            #At least radius open from collision?? Or just check collision?
+            # for j in range(0, numberWaypoints):
+            #     chi = self.mod(np.arctan2((eastP - tree[minIndex, 1]), (northP - tree[minIndex, 0])))
+            #     np.insert(a, 1, np.array((1, 1)), 1)
+            #     #Make sure far enough apart
+            #     distBetween = PLAN.R_min
+            #     #They will be too close together and will need to switch to straight line follower...
+            #     #Make waypoint.type an array
+            #'straight_line']
+
+
+
             for i in range(0, numberWaypoints):
                 # current configuration vector format: N, E, D, Va
                 if i == 0 and np.sqrt((state.pn - primaryWaypoints[0,0])**2 + (state.pe - primaryWaypoints[1,0])**2) > PLAN.R_min:

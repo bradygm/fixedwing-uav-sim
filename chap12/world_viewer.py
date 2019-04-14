@@ -67,6 +67,17 @@ class world_viewer():
         # redraw
         self.app.processEvents()
 
+    def drawWaypointPoints(self, waypoints):
+        red = np.array([1., 0., 0., 1])
+        R = np.array([[0, 1, 0], [1, 0, 0], [0, 0, -1]])
+        waypoint_pos = R.T @ waypoints
+        waypoints_size = 10 * np.ones((waypoints.shape[1]))
+        waypoint_color2 = np.tile(red, (waypoints.shape[1], 1))
+        self.waypointPoint = gl.GLScatterPlotItem(pos=waypoint_pos.T,
+                                                  color=waypoint_color2,
+                                                  size=waypoints_size)
+        self.window.addItem(self.waypointPoint)
+
     def drawMAV(self, state):
         """
         Update the drawing of the MAV.
@@ -253,6 +264,7 @@ class world_viewer():
     def drawWaypoints(self, waypoints, radius):
         blue = np.array([[0., 0., 1., 1.]])
         blue = np.array([[30, 144, 255, 255]])/255.
+        red = np.array([1., 0., 0., 1])
         if isinstance(waypoints.type, str):
             if waypoints.type=='straight_line' or waypoints.type=='fillet':
                 points = self.straight_waypoint_points(waypoints)
@@ -282,6 +294,7 @@ class world_viewer():
                                                    antialias=True,
                                                    mode='line_strip')
                 self.window.addItem(self.waypoints)
+
             else:
                 self.waypoints.setData(pos=points)
 

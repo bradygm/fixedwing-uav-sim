@@ -20,7 +20,7 @@ class path_planner:
         self.rrtDubins = planRRTDubins(map)
         self.rrtDubinsProj = planRRTDubinsProj(map)
 
-    def update(self, map, state, PLAN):
+    def update(self, map, state, PLAN, world_view):
         # this flag is set for one time step to signal a redraw in the viewer
         # planner_flag = 1  # return simple waypoint path
         # planner_flag = 2  # return dubins waypoint path
@@ -172,8 +172,9 @@ class path_planner:
             numberWaypoints = 4
             primaryWaypoints = np.array([[0., 0., -100.],
                                          [2000., 0., -100.],
-                                         [0., 1200., -100.],
-                                         [3000., 3000., -100.]]).T
+                                         [0., 1500., -100.],
+                                         [3200., 3200., -100.]]).T
+            world_view.drawWaypointPoints(primaryWaypoints)
             primaryWaypointsAirspeed = np.array([[Va, Va, Va, Va]])
             primaryCourseAngles = np.array([[np.radians(0),
                                              np.radians(45),
@@ -185,8 +186,8 @@ class path_planner:
             prevChi = 0
             while j < numberWaypoints-1:
                 chi = np.arctan2((primaryWaypoints[1,j+1] - primaryWaypoints[1,j]), (primaryWaypoints[0,j+1] - primaryWaypoints[0,j]))
-                primaryCourseAngles[:,j] = prevChi
-                distBetween = PLAN.R_min
+                primaryCourseAngles[:,j] = prevChi+.01
+                distBetween = PLAN.R_min*2
                 newWay = primaryWaypoints[:,j+1] - distBetween * np.array([np.cos(chi), np.sin(chi), 0.]).T
                 primaryWaypoints = np.insert(primaryWaypoints, j+1, newWay, 1)
                 primaryWaypointsAirspeed = np.insert(primaryWaypointsAirspeed, j + 1, Va, 1)

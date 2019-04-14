@@ -8,6 +8,7 @@ Finds multiple paths and picks the best.
 Waypoints are passed through in straight lines
 Waypoints can be at multiple altitudes
 Pick the best path after smoothing?
+Check added point for collision
 
 """
 class planRRTDubinsProj():
@@ -58,8 +59,9 @@ class planRRTDubinsProj():
                 continue
             minPath = self.findMinimumPath(tree, end_node)
             smoothPath, newWeight = self.smoothPath(minPath, map, R_min)
-            solvedPaths.append(smoothPath)
-            solvedPathsWeights.append(newWeight)
+            smoothPath2, newWeight2 = self.smoothPath(smoothPath, map, R_min)
+            solvedPaths.append(smoothPath2)
+            solvedPathsWeights.append(newWeight2)
             numSolvedPaths += 1
         minIndex = solvedPathsWeights.index(min(solvedPathsWeights))
         return solvedPaths[minIndex]
@@ -226,11 +228,39 @@ class planRRTDubinsProj():
         waypoints.airspeed[:, waypoints.num_waypoints] = path.airspeed[:, path.num_waypoints - 1]
         weight += pathWeight
         waypoints.num_waypoints += 1
-        # smoothedPath.append(path[len(path) - 1])
-        # for i in range(0, len(smoothedPath) - 1):  # Could add other things to this cost function if wanted
-        #     cost += np.sqrt(
-        #         (smoothedPath[i].n - smoothedPath[i + 1].n) ** 2 + (smoothedPath[i].e - smoothedPath[i + 1].e) ** 2 + \
-        #         (smoothedPath[i].d - smoothedPath[i + 1].d) ** 2)
+
+        # #Loop through again, but jumping two
+        # waypoints2 = msg_waypoints()
+        # waypoints2.ned[:, waypoints.num_waypoints] = waypoints.ned[:, waypoints.num_waypoints]
+        # waypoints2.course[:, waypoints.num_waypoints] = waypoints.course[:, waypoints.num_waypoints]
+        # waypoints2.num_waypoints += 1
+        # weight = 0
+        # index = 2
+        # while index < waypoints.num_waypoints - 1:
+        #     collision, pathWeight = self.collision(np.concatenate(
+        #         (waypoints2.ned[:, waypoints2.num_waypoints - 1], waypoints2.course[:, waypoints2.num_waypoints - 1]),
+        #         axis=0), np.concatenate((waypoints.ned[:, index + 1], waypoints.course[:, index + 1]), axis=0), map, R_min)
+        #     if collision or \
+        #             np.linalg.norm(
+        #                 waypoints2.ned[:, waypoints2.num_waypoints - 1] - waypoints.ned[:, index + 1]) <= 2. * R_min:
+        #         # self.flyablePath(smoothedPath[len(smoothedPath) - 1], path[index + 1], prev_chi, chi):
+        #         waypoints2.ned[:, waypoints2.num_waypoints] = waypoints.ned[:, index]
+        #         waypoints2.course[:, waypoints2.num_waypoints] = waypoints.course[:, index]
+        #         waypoints2.airspeed[:, waypoints2.num_waypoints] = waypoints.airspeed[:, index]
+        #         weight += pathWeight
+        #         waypoints2.num_waypoints += 1
+        #     index += 2
+        # collision, pathWeight = self.collision(np.concatenate(
+        #     (waypoints2.ned[:, waypoints2.num_waypoints - 1], waypoints2.course[:, waypoints2.num_waypoints - 1]), axis=0),
+        #     np.concatenate((waypoints.ned[:, index], waypoints.course[:, index]),
+        #                    axis=0), map, R_min)
+        # waypoints2.ned[:, waypoints.num_waypoints] = waypoints.ned[:, waypoints.num_waypoints - 1]
+        # waypoints2.course[:, waypoints.num_waypoints] = waypoints.course[:, waypoints.num_waypoints - 1]
+        # waypoints2.airspeed[:, waypoints.num_waypoints] = waypoints.airspeed[:, waypoints.num_waypoints - 1]
+        # weight += pathWeight
+        # waypoints2.num_waypoints += 1
+
+
 
         return waypoints, weight
 

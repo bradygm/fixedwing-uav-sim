@@ -165,7 +165,7 @@ class path_planner:
                 self.waypoints.num_waypoints = numNew + numOld
         elif planner_flag == 5:
             # self.waypoints.type = ['dubins','dubins','dubins','dubins']
-            self.waypoints.type = ['straight_line','dubins','dubins','straight_line','straight_line']
+            self.waypoints.type = ['straight_line']
             # self.waypoints.type = 'dubins'
             self.waypoints.num_waypoints = 0
             Va = 25
@@ -181,20 +181,28 @@ class path_planner:
                                              np.radians(-135)]])
             # Make new points before the real waypoints. In line with chi from previous waypoint pointing.
             #At least radius open from collision?? Or just check collision?
-            # for j in range(0, numberWaypoints):
-            #     chi = self.mod(np.arctan2((eastP - tree[minIndex, 1]), (northP - tree[minIndex, 0])))
-            #     np.insert(a, 1, np.array((1, 1)), 1)
-            #     #Make sure far enough apart
-            #     distBetween = PLAN.R_min
-            #     #They will be too close together and will need to switch to straight line follower...
-            #     #Make waypoint.type an array
-            #'straight_line']
+            j = 0
+            prevChi = 0
+            while j < numberWaypoints-1:
+                chi = np.arctan2((primaryWaypoints[1,j+1] - primaryWaypoints[1,j]), (primaryWaypoints[0,j+1] - primaryWaypoints[0,j]))
+                primaryCourseAngles[:,j] = prevChi
+                distBetween = PLAN.R_min
+                newWay = primaryWaypoints[:,j+1] - distBetween * np.array([np.cos(chi), np.sin(chi), 0.]).T
+                primaryWaypoints = np.insert(primaryWaypoints, j+1, newWay, 1)
+                primaryWaypointsAirspeed = np.insert(primaryWaypointsAirspeed, j + 1, Va, 1)
+                primaryCourseAngles = np.insert(primaryCourseAngles, j + 1, chi, 1)
+                numberWaypoints += 1
+                prevChi = chi
+                j += 2
+                #Make sure far enough apart
+
 
 
 
             for i in range(0, numberWaypoints):
                 # current configuration vector format: N, E, D, Va
                 if i == 0 and np.sqrt((state.pn - primaryWaypoints[0,0])**2 + (state.pe - primaryWaypoints[1,0])**2) > PLAN.R_min:
+                    even = True
                     wpp_start = np.array([state.pn,
                                           state.pe,
                                           -state.h,
@@ -206,6 +214,7 @@ class path_planner:
                     self.waypoints.num_waypoints += 1
 
                 elif i == 0:
+                    even = True
                     self.waypoints.ned[:, self.waypoints.num_waypoints] = np.array([primaryWaypoints[0, 0],
                                                                                       primaryWaypoints[1, 0],
                                                                                       primaryWaypoints[2, 0]])
@@ -214,6 +223,10 @@ class path_planner:
                     self.waypoints.num_waypoints += 1
                     continue
                 else:
+                    if even:
+                        even = False
+                    else:
+                        even = True
                     wpp_start = np.array([primaryWaypoints[0, i - 1],
                                           primaryWaypoints[1, i - 1],
                                           primaryWaypoints[2, i - 1],
@@ -224,6 +237,15 @@ class path_planner:
                                     primaryWaypoints[2, i],
                                     primaryCourseAngles.item(i),
                                     primaryWaypointsAirspeed.item(i)])
+                if even and i != 0:
+                    self.waypoints.ned[:, self.waypoints.num_waypoints] = np.array([primaryWaypoints[0, i],
+                                                                                    primaryWaypoints[1, i],
+                                                                                    primaryWaypoints[2, i]])
+                    self.waypoints.course[:, self.waypoints.num_waypoints] = primaryCourseAngles.item(i)
+                    self.waypoints.airspeed[:, self.waypoints.num_waypoints] = primaryWaypointsAirspeed.item(i)
+                    self.waypoints.type.append('straight_line')
+                    self.waypoints.num_waypoints += 1
+                    continue
                 waypoints = self.rrtDubinsProj.planPath(wpp_start, wpp_end, PLAN.R_min, map)
                 numNew = waypoints.num_waypoints-1
                 numOld = self.waypoints.num_waypoints
@@ -231,10 +253,16 @@ class path_planner:
                     self.waypoints.ned[:, numOld:numOld + numNew] = waypoints.ned[:, 1:numNew+1]
                     self.waypoints.course[:,numOld:numOld + numNew] = waypoints.course[:,1:numNew+1]
                     self.waypoints.airspeed[:, numOld:(numOld + numNew)] = wpp_end.item(4) * np.ones((1, numNew))
+                    for newI in range(0, numNew-1):
+                        self.waypoints.type.append('dubins')
                 else:
                     self.waypoints.ned[:, numOld] = waypoints.ned[:, 1]
                     self.waypoints.course[:, numOld] = waypoints.course[:, 1]
                     self.waypoints.airspeed[:, numOld] = wpp_end.item(4) * np.ones((1, numNew))
+                if even:
+                    self.waypoints.type.append('straight_line')
+                else:
+                    self.waypoints.type.append('dubins')
                 self.waypoints.num_waypoints = numNew + numOld
         else:
             print("Error in Path Planner: Undefined planner type.")

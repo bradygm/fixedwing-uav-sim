@@ -26,7 +26,7 @@ class planRRTDubinsProj():
         numSolvedPaths = 0
         solvedPaths = []
         solvedPathsWeights = []
-        while numSolvedPaths < 3:
+        while numSolvedPaths < 4:
             # specify start and end nodes from wpp_start and wpp_end
             # format: N, E, D, chi, cost, parentIndex, connectsToGoalFlag,
             start_node = np.array([wpp_start.item(0), wpp_start.item(1), pd, self.mod(wpp_start.item(3)), 0, -1, 0])
@@ -54,6 +54,8 @@ class planRRTDubinsProj():
 
 
             # find path with minimum cost to end_node
+            if flag == 2:
+                continue
             minPath = self.findMinimumPath(tree, end_node)
             smoothPath, newWeight = self.smoothPath(minPath, map, R_min)
             solvedPaths.append(smoothPath)
@@ -119,7 +121,11 @@ class planRRTDubinsProj():
 
     def extendTree(self, tree, endN, R_min, map, pd):
         successFlag = False
+        counter = 0
         while not successFlag:
+            counter += 1
+            if counter > 100:
+                return tree, 2
             # Generate Random Point
             northP, eastP = self.randomPoint(map)
 

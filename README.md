@@ -1,5 +1,5 @@
 # EE674
-Python implementation of a small fixed wing UAV simulator for flight dynamics and controls class.
+Python implementation of a small fixed wing UAV simulator outlined in [Small Unmanned Aircraft: Theory and Practice](https://uavbook.byu.edu/doku.php).
 
 
 Run this command for necessary python packages:

@@ -1,6 +1,8 @@
 # EE674
 Python implementation of a small fixed wing UAV simulator outlined in [Small Unmanned Aircraft: Theory and Practice](https://uavbook.byu.edu/doku.php).
 
+Includes wind simulations, controllers, and a Dubins RRT path planner. 
+
 
 Run this command for necessary python packages:
 
